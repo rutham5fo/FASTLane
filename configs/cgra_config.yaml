@@ -1,0 +1,13 @@
+#-------------------------------------------------
+# All CGRA specification goes here
+#-------------------------------------------------
+
+CGRA:
+  # Only radix = 2, blocks = 2 Supported at the moment !!
+  name: test                      # CGRA Name
+  radix: 2                        # Specifies the number of inputs and outputs per PE
+  blocks: 2                       # Number of blocks/columns in the CGRA
+  block_size: 256                   # Total number of elements/PE per block
+  composition:                    # Composition of each block
+    - {'Special': 256}                # Block 0 contains 8 basic type FUs | A specific PE order may be described here -> {'Basic': 2, 'Special': 4, 'Basic': 2}
+    - {'Special': 256}

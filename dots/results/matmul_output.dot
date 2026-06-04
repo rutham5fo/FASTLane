@@ -1,0 +1,30 @@
+digraph G {
+i3_add1 [opcode=add, constVal="2560", opID=0, rank=1];
+i3_add2 [opcode=add, opID=1, rank=2];
+i3_mul1 [opcode=mul, constVal="80", direct_in=true, opID=2, rank=0];
+i3_mul2 [opcode=mul, constVal="4", opID=3, rank=1];
+i4_load [opcode=load, memName="", opID=4, rank=4];
+i5_add1 [opcode=add, constVal="2816", opID=5, rank=2];
+i5_add2 [opcode=add, opID=6, rank=3];
+i5_mul1 [opcode=mul, constVal="80", opID=7, rank=1];
+i5_mul2 [opcode=mul, constVal="4", direct_in=true, opID=8, rank=2];
+i6_load [opcode=load, memName="", opID=9, rank=4];
+i7_mul [opcode=mul, opID=10, rank=5];
+i8_add [opcode=add, reflexive=true, direct_out=true, opID=11, rank=6];
+i9_add [opcode=add, constVal="1", reflexive=true, opID=12, rank=0];
+i3_add1 -> i3_add2 [operand=any2input];
+i3_mul1 -> i3_add1 [operand=any2input];
+i3_mul2 -> i3_add2 [operand=any2input];
+i4_load -> i7_mul [operand=any2input];
+i5_add1 -> i5_add2 [operand=any2input];
+i5_add2 -> i6_load [operand=addr];
+i5_mul1 -> i5_add1 [operand=any2input];
+i5_mul2 -> i5_add2 [operand=any2input];
+i6_load -> i7_mul [operand=any2input];
+i7_mul -> i8_add [operand=any2input];
+i9_add -> i3_mul2 [operand=any2input];
+i9_add -> i5_mul1 [operand=any2input];
+bridge_1 [opcode=bridge, opID=1, rank=3];
+i3_add2 -> bridge_1 [operand=any1input];
+bridge_1 -> i4_load [operand=addr];
+}

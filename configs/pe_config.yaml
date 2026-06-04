@@ -1,0 +1,27 @@
+#-------------------------------------------------
+# All PE/Functional-Unit specification goes here
+#-------------------------------------------------
+
+Route:                                     # Routing operations are common to all FUs. NOTE: cgra_context.py searches for this key
+  - {'name': bridge, 'cost': {"in": 1, "out": 1}}       # Used to bridge non-bipartite nodes
+  - {'name': split, 'cost': {"in": 1, "out": 2}}        # Used to increase node fanout
+  - {'name': merge, 'cost': {"in": 2, "out": 1}}        # Used to increase node fanin
+
+Basic:
+  opGroup:
+    alu:                                    # Opcodes supported by ALU
+      - {'name': 'add', 'cost': {"in": 2, "out": 1}}        # Each opcode key also holds its PE IO cost
+      - {'name': 'sub', 'cost': {"in": 2, "out": 1}}
+      - {'name': 'mul', 'cost': {"in": 2, "out": 1}}
+      - {'name': 'div', 'cost': {"in": 2, "out": 1}}
+      - {'name': 'load', 'cost': {"in": 1, "out": 1}}       # Addr in, Data out
+      - {'name': 'store', 'cost': {"in": 2, "out": 0}}      # Addr in, Data in
+
+Special:
+  opGroup:
+    alu:
+      - {'name': 'fadd', 'cost': {"in": 2, "out": 1}}
+      - {'name': 'fsub', 'cost': {"in": 2, "out": 1}}
+      - {'name': 'fmul', 'cost': {"in": 2, "out": 1}}
+      - {'name': 'fdiv', 'cost': {"in": 2, "out": 1}}
+      - {'name': 'sqrt', 'cost': {"in": 2, "out": 1}}
