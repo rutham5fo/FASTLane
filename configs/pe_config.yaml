@@ -2,26 +2,46 @@
 # All PE/Functional-Unit specification goes here
 #-------------------------------------------------
 
-Route:                                     # Routing operations are common to all FUs. NOTE: cgra_context.py searches for this key
-  - {'name': bridge, 'cost': {"in": 1, "out": 1}}       # Used to bridge non-bipartite nodes
-  - {'name': split, 'cost': {"in": 1, "out": 2}}        # Used to increase node fanout
-  - {'name': merge, 'cost': {"in": 2, "out": 1}}        # Used to increase node fanin
+#--------------------- OpCode Definition -------------------
+# Common to all PEs
 
-Basic:
+OPdef:                                                  # Do not change the name of this key, cgra_context.py searches for it.
+  - {name: 'bridge', type: 'route', cost: {"in": 1, "out": 1}}                     # Used to bridge non-bipartite nodes
+  - {name: 'split', type: 'route', cost: {"in": 1, "out": 2}}                     # Used to increase node fanout
+  - {name: 'merge', type: 'route', cost: {"in": 2, "out": 1}}                     # Used to increase node fanin
+  - {name: 'add', type: 'alu', cost: {"in": 2, "out": 1}}
+  - {name: 'sub', type: 'alu', cost: {"in": 2, "out": 1}}
+  - {name: 'mul', type: 'alu', cost: {"in": 2, "out": 1}}
+  - {name: 'div', type: 'alu', cost: {"in": 2, "out": 1}}
+  - {name: 'fadd', type: 'alu', cost: {"in": 2, "out": 1}}
+  - {name: 'fsub', type: 'alu', cost: {"in": 2, "out": 1}}
+  - {name: 'fmul', type: 'alu', cost: {"in": 2, "out": 1}}
+  - {name: 'fdiv', type: 'alu', cost: {"in": 2, "out": 1}}
+  - {name: 'sqrt', type: 'alu', cost: {"in": 2, "out": 1}}
+  - {name: 'load', type: 'mem', cost: {"in": 1, "out": 1}}                     # Addr in, Data out
+  - {name: 'store', type: 'mem', cost: {"in": 2, "out": 0}}                     # Addr in, Data in
+
+
+#--------------------- PE Description -----------------
+# Customize by adding opGroups and Ops
+
+PE_int:
   opGroup:
     alu:                                    # Opcodes supported by ALU
-      - {'name': 'add', 'cost': {"in": 2, "out": 1}}        # Each opcode key also holds its PE IO cost
-      - {'name': 'sub', 'cost': {"in": 2, "out": 1}}
-      - {'name': 'mul', 'cost': {"in": 2, "out": 1}}
-      - {'name': 'div', 'cost': {"in": 2, "out": 1}}
-      - {'name': 'load', 'cost': {"in": 1, "out": 1}}       # Addr in, Data out
-      - {'name': 'store', 'cost': {"in": 2, "out": 0}}      # Addr in, Data in
+      - 'add'
+      - 'sub'
+      - 'mul'
+      - 'div'
+      - 'load'
+      - 'store'
 
-Special:
+PE_float:
   opGroup:
     alu:
-      - {'name': 'fadd', 'cost': {"in": 2, "out": 1}}
-      - {'name': 'fsub', 'cost': {"in": 2, "out": 1}}
-      - {'name': 'fmul', 'cost': {"in": 2, "out": 1}}
-      - {'name': 'fdiv', 'cost': {"in": 2, "out": 1}}
-      - {'name': 'sqrt', 'cost': {"in": 2, "out": 1}}
+      - 'fadd'
+      - 'fsub'
+      - 'fmul'
+      - 'fdiv'
+      - 'sqrt'
+      - 'load'
+      - 'store'

@@ -11,7 +11,7 @@ from mapper.router import router
 
 class mapper:
 
-    def __init__ (self, cgra_config_fpath: str='', pe_config_fpath: str='', logger_name: str='', log_level: int=logging.INFO, log_dir: str='logs') -> None:
+    def __init__ (self, cgra_config_fpath: str='', pe_config_fpath: str='', cgra_name: str='', logger_name: str='', log_level: int=logging.INFO, log_dir: str='logs') -> None:
         fn_name = placer.__init__.__name__
         # Setup logger
         self.logger_name = None
@@ -22,16 +22,25 @@ class mapper:
         else:
             self.logger_name = self.__class__.__name__
             self.logger = self.log_setup(self.logger_name, log_level, log_dir)
-        # Check
-        if (not cgra_config_fpath or not pe_config_fpath):
-            err_msg = f'{fn_name} ||| Please provide valid config files for CGRA and PE definition !'
+        # State vars
+        self.cgra_ctxt = None
+        self.mapper_ctxt = None
+        self.plcr = None
+        self.rtr = None
+        # Setup vars
+        if (not cgra_config_fpath or not pe_config_fpath or not cgra_name):
+            err_msg = f'{fn_name} ||| Please provide valid CGRA name and config files for CGRA and PE definition !'
             self.logger.error(err_msg)
             raise ValueError(err_msg)
-        # State vars
-        self.cgra_ctxt = cgra_context(cgra_config_fpath, pe_config_fpath, log_level=logging.DEBUG)
-        self.mapper_ctxt = mapper_context(self.cgra_ctxt.cgra_blocks, self.cgra_ctxt.cgra_block_size, self.cgra_ctxt.cgra_radix, logger_name=self.logger_name)
-        self.plcr = placer(self.cgra_ctxt, log_level=logging.DEBUG)
-        self.rtr = router(self.cgra_ctxt, log_level=logging.DEBUG)
+        else:
+            try:
+                self.cgra_ctxt = cgra_context(cgra_config_fpath, pe_config_fpath, cgra_name, log_level=logging.DEBUG)
+            except Exception as ex:
+                self.logger.error(f'{fn_name} ||| Execption: {ex}')
+                raise
+            self.mapper_ctxt = mapper_context(self.cgra_ctxt.cgra_blocks, self.cgra_ctxt.cgra_block_size, self.cgra_ctxt.cgra_radix, logger_name=self.logger_name)
+            self.plcr = placer(self.cgra_ctxt, log_level=logging.DEBUG)
+            self.rtr = router(self.cgra_ctxt, log_level=logging.DEBUG)
     
     def log_setup (self, logger_name, log_level, log_dir) -> logging:
         cwd = os.getcwd()
@@ -90,19 +99,8 @@ def _test ():
     dot_ctxt.get_graph(dot_fpath)
 
     # Create Mapper
-    mpr = mapper(cgra_cfg_fpath, pe_cfg_fpath, log_level=logging.DEBUG)
+    mpr = mapper(cgra_cfg_fpath, pe_cfg_fpath, 'CGRA', log_level=logging.DEBUG)
     
-    # Perform standard CGRA sanity checks
-    cgra_size = mpr.cgra_ctxt.cgra_size
-    cgra_pe_cnt = 0
-    for blk_deet in mpr.cgra_ctxt.cgra_cfg['CGRA']['composition']:
-        for k in blk_deet.keys():
-            cgra_pe_cnt += blk_deet[k]
-    if (cgra_pe_cnt != cgra_size):
-        print (f'{fn_name} ||| CGRA config: CGRA_size and composition mismatch !')
-        return -1
-    
-    # Run mapper
     mpr.run(dot_ctxt)
 
 if __name__ == "__main__":

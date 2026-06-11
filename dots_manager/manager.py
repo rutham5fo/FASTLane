@@ -8,6 +8,8 @@ Reduce bridges to minimize routing nodes.
 NOTE: (1) DOT must be a 2-regular graph (i.e., max fan-in/out = 2 for a node)
       (2) Graph CAN be a cyclic, as we take advantage of GraphViz to
           establish node ranks. GraphViz takes care of breaking cycles, etc.
+      (3) Unroll capabilites are only for testing purposes. This does not 
+          modify the constants in the nodes responsible for proper unrolling.
 """
 
 import logging
@@ -208,6 +210,64 @@ class dot_manager:
                     self.dot_ctxt.dot_graph.add_edge(bridge_edge_1)
         # Update graph
         self.dot_ctxt.update(fn_name)
+
+    # Unroll the DFG
+    def unroll (self, unroll_factor: int=1, breadth: int=1, depth: int=1, offset: int=0, incremental: bool=False) -> bool:
+        fn_name = dot_manager.unroll.__name__
+        ret_val = True
+        # Sanity check for unroll factor
+        # Unroll_factor must be a product of breadth (--) and depth (|)
+        if (not incremental and unroll_factor != (breadth * depth)):
+            self.logger.error(f'{fn_name} ||| Product of depth and breadth must equal unroll-factor !')
+            ret_val = False
+        elif (incremental and offset < 0):
+            self.logger.error(f'{fn_name} ||| Incremental unrolling cannot have a negative offset !')
+            ret_val = False
+        if (unroll_factor > 1 and ret_val):
+            # Get og nodes and edges
+            dnodes = self.dot_ctxt.dot_nodes
+            dedges = self.dot_ctxt.dot_edges
+            # New nodes and edges
+            n_dnodes = []
+            n_dedges = []
+            self.logger.debug(f'{fn_name} ||| Unrolling DFG by {unroll_factor}')
+            for i in range(breadth):
+                unroll_inc = 0
+                for j in range(depth):
+                    unroll_suffix = f'_{i*depth+j}'
+                    # Add a copy of nodes
+                    for n in dnodes:
+                        t_node_name = n.get_name() + unroll_suffix
+                        t_node_attr = n.get_attributes()
+                        if (incremental):
+                            t_node_rank = int(t_node_attr['rank']) + unroll_inc + offset
+                        else:
+                            t_node_rank = int(t_node_attr['rank']) + self.dot_ctxt.dot_max_rank * j + offset
+                        t_node_attr['rank'] = str(t_node_rank)
+                        t_node_attr_list = list(t_node_attr.items())
+                        t_node = self.dot_ctxt.new_node(t_node_name, t_node_attr_list)
+                        n_dnodes.append(t_node)
+                    # Add a copy of edges
+                    for e in dedges:
+                        t_edge_src_name = e.get_source() + unroll_suffix
+                        t_edge_dest_name = e.get_destination() + unroll_suffix
+                        t_edge_attr_list = list(e.get_attributes().items())
+                        t_edge = self.dot_ctxt.new_edge(t_edge_src_name, t_edge_dest_name, t_edge_attr_list)
+                        n_dedges.append(t_edge)
+                    unroll_inc += 1
+            # Delete existing edges and nodes from graph
+            for n in dnodes:
+                self.dot_ctxt.dot_graph.del_node(n.get_name())
+            for e in dedges:
+                self.dot_ctxt.dot_graph.del_edge(e.get_source(), e.get_destination())
+            # Add new nodes and edges to graph
+            for n in n_dnodes:
+                self.dot_ctxt.dot_graph.add_node(n)
+            for e in n_dedges:
+                self.dot_ctxt.dot_graph.add_edge(e)
+            # Update graph
+            self.dot_ctxt.update(fn_name)
+        return ret_val
     
     # Make all opcodes lowercase
     def make_lowerCase (self) -> None:
@@ -228,6 +288,11 @@ def _test():
     # CMD parser
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', action='store', default="", dest='dot_file', help='DOT file to parse')
+    parser.add_argument('-u', action='store', type=int, default=1, dest='dot_unroll', help='Unroll factor of DFG')
+    parser.add_argument('-b', action='store', type=int, default=1, dest='dot_unroll_breadth', help='Unroll breadth')
+    parser.add_argument('-d', action='store', type=int, default=1, dest='dot_unroll_depth', help='Unroll depth')
+    parser.add_argument('-o', action='store', type=int, default=0, dest='dot_unroll_offset', help='Unroll depth offset')
+    parser.add_argument('-I', action='store_true', dest='dot_unroll_incremental', help='Incremental unrolling in depth')
     args = parser.parse_args()
 
     # Setup Logging
@@ -267,10 +332,14 @@ def _test():
     dot_man.make_bipartite()
     # Make all opcodes lowercase
     dot_man.make_lowerCase()
-    # Print Dot file
-    dest_fname = str(args.dot_file).split('/')[-1].replace('.dot', '_output.dot')
-    dest_fpath = os.path.join(cwd, 'dots/results', dest_fname)
-    dot_man.write_dot(dest_fpath)
+    # Unroll DFG
+    if (dot_man.unroll(args.dot_unroll, args.dot_unroll_breadth, args.dot_unroll_depth, args.dot_unroll_offset, args.dot_unroll_incremental)):
+        # Print Dot file
+        dest_dot_unroll_desc = f'u{args.dot_unroll}b{args.dot_unroll_breadth}d{args.dot_unroll_depth}o{args.dot_unroll_offset}'
+        dest_dot_desc = dest_dot_unroll_desc + 'i' if (args.dot_unroll_incremental) else dest_dot_unroll_desc
+        dest_fname = str(args.dot_file).split('/')[-1].replace('.dot', f'_{dest_dot_desc}_output.dot')
+        dest_fpath = os.path.join(cwd, 'dots/results', dest_fname)
+        dot_man.write_dot(dest_fpath)
 
 if __name__ == "__main__":
     _test()

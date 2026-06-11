@@ -131,12 +131,20 @@ class router:
         dnodes = dot_ctxt.dot_nodes
         routed = False
         for n in dnodes:
+            exit_l0 = False
             n_rank = int(n.get('rank'))
             n_name = n.get_name()
             n_opID = n.get('opID')
             _, n_children = dot_ctxt.get_children(n_name)
             n_blk = n_rank % self.cgra_ctxt.cgra_blocks
             n_pe = mapper_ctxt.node2pe[n_name]
+            # Find shadow equivalents
+            n_shadow_blk = mapper_ctxt.get_shadow_block(n_blk)
+            t_ln_pe = mapper_ctxt.get_localPE_id(n_pe)
+            n_shadow_pe = mapper_ctxt.get_globalPE_id(t_ln_pe, n_shadow_blk)
+            # The blk_sel values for src/path-trackers depend on which direction
+            # the edge is traveling in. All forward paths will be in the same 
+            # region as current block. But, all reverse edges will be in the shadow region.
             n_out_opID = mapper_ctxt.pe_meta[n_pe]['out_opID']
             blk_path_tracker = path_tracker[n_blk]
             blk_src_tracker = source_tracker[n_blk]
@@ -149,25 +157,47 @@ class router:
             # and insert destination PE into path-tracker. Else, move on the the 
             # next port and repeat the process till a suitable port is found.
             
-            # Sanity checks
+            # Generic Sanity checks
             num_children = len(n_children)
             if (num_children > self.cgra_ctxt.cgra_radix):
                 self.logger.error(f'{fn_name} ||| Fanout of node[{n_name}] with opID[{n_opID}], greater than available ports !')
-                break
-            if (not None in n_out_opID):
-                self.logger.error(f'{fn_name} ||| No un-mapped ports available for node[{n_name}] with opID[{n_opID}], placed in PE[{n_pe}] !')
                 break
             
             # Reaching this point means there is atleast one free out_port in parent node
             attempted_ports = [[] for _ in range(num_children)]
             for cid, ch in enumerate(n_children):
+                ch_rank = int(ch.get('rank'))
                 ch_name = ch.get_name()
                 ch_opID = ch.get('opID')
+                ch_blk = ch_rank % self.cgra_ctxt.cgra_blocks
                 ch_pe = mapper_ctxt.node2pe[ch_name]
                 ch_in_opID = mapper_ctxt.pe_meta[ch_pe]['in_opID']
                 port_children = [(None, None) for _ in range(self.cgra_ctxt.cgra_radix)]   # [(child_node_id, child_PE_id)]
                 routed = False
                 recursion_cnt = 0
+
+                # !!! NOTE: Untested Feature BEGIN !!!
+                # The blk_sel values for src/path-trackers depend on which direction
+                # the edge is traveling in. All forward paths will be in the same 
+                # region as current block. But, all reverse edges will be in the shadow region.
+                # Except the special cases checked for below, which always go through current region.
+                if (ch_blk > n_blk or n_blk == 0 or n_blk == self.cgra_ctxt.cgra_phy_blocks-1 or (ch_blk == 0 and n_blk == self.cgra_ctxt.cgra_blocks-1)):
+                    # Go through current region's source resources
+                    n_out_opID = mapper_ctxt.pe_meta[n_pe]['out_opID']
+                    blk_path_tracker = path_tracker[n_blk]
+                    blk_src_tracker = source_tracker[n_blk]
+                else:
+                    # Go through shadow region's source resources
+                    n_out_opID = mapper_ctxt.pe_meta[n_shadow_pe]['out_opID']
+                    blk_path_tracker = path_tracker[n_shadow_blk]
+                    blk_src_tracker = source_tracker[n_shadow_blk]
+                # Source node sanity check
+                if (not None in n_out_opID):
+                    self.logger.error(f'{fn_name} ||| No un-mapped ports available for node[{n_name}] with opID[{n_opID}], placed in PE[{n_pe}] !')
+                    exit_l0 = True
+                    break
+                # !!! NOTE: Untested Feature END !!!
+
                 # Route n_pe->ch_pe edge
                 self.logger.debug(f'{fn_name} ||| Routing Edge from src_PE[{n_pe}] -> dest_PE[{ch_pe}]')
                 # Find a port that does not contain the destination PE in its path-set
@@ -178,7 +208,12 @@ class router:
                     self.logger.error(f'{fn_name} ||| There is no valid route from (node[{n_name}], opID[{n_opID}], PE[{n_pe}]) to' \
                                       f'(node[{ch_name}], opID[{ch_opID}], PE[{ch_pe}])')
                     break
+            if (exit_l0):
+                break
         self.logger.info(f'{fn_name} ||| Routing Phase-1: Complete')
+        # Collapse shadow PEs meta into physical region
+        mapper_ctxt.condense_pe_meta()
+        # Make src-dest pairs with local_PE_ids for Benes router
         mapper_ctxt.make_route_pairs(source_tracker, path_tracker)
         # Start Benes router
         if (routed):

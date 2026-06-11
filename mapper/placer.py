@@ -53,13 +53,13 @@ class placer:
     
     def assert_routing_opcode (self, node_opcode: str) -> bool:
         ret_val = False
-        for rop in self.cgra_ctxt.pe_cfg['Route']:
-            if (node_opcode == rop['name']):
+        for rop in self.cgra_ctxt.pe_cfg['OPdef']:
+            if (node_opcode == rop['name'] and rop['type'] == 'route'):
                 ret_val = True
                 break
         return ret_val
 
-    def find_candidate_pe (self, pe_list: list, pe_info: dict, target_opcode_cost: list, route_opcode: bool) -> tuple:
+    def find_candidate_pe (self, pe_list: list, pe_info: dict, target_opcode_cost: list, route_opcode: bool, shadow_pe_list: list) -> tuple:
         fn_name = placer.find_candidate_pe.__name__
         target_pe_ID = None
         target_pe_type = None
@@ -87,6 +87,10 @@ class placer:
                     discard_locs.append(i)
             # Discard PEs marked for removal
             for pid in discard_locs:
+                linked = pe_list[pid][2]
+                if (linked):
+                    # Delete pe from shadow block too
+                    del shadow_pe_list[pid]
                 del pe_list[pid]
         return (target_pe_ID, target_pe_type, target_pe_opGroup)
     
@@ -95,20 +99,22 @@ class placer:
         blk_pe_info[trt_pe_ID][1][0] -= trt_opcode_cost[0]
         blk_pe_info[trt_pe_ID][1][1] -= trt_opcode_cost[1]
 
-    def remove_target_pe (self, trt_pe_ID: int, trt_pe_type: str, trt_pe_opGroup: str, blk_avail_pe: dict) -> None:
+    def remove_target_pe (self, trt_pe_ID: int, trt_pe_type: str, trt_pe_opGroup: str, blk_avail_pe: dict, shadow_blk_avail_pe: dict) -> None:
         fn_name = placer.remove_target_pe.__name__
         # Remove PEs from all opGroups using target_pe_ID/opGroup in blk_avail_pe
         #self.logger.debug(f'{fn_name} ||| New blk_pe_info after mutation @ [{trt_pe_ID}]: {blk_pe_info}')
         # Get opGroup Keys to search for in blk_avail_pe
-        op_keys = []
+        op_keys = self.cgra_ctxt.pe_cfg[trt_pe_type]['opGroup'][trt_pe_opGroup]
         #self.logger.debug(f'{fn_name} ||| target_pe_type = {trt_pe_type}')
-        for ok in self.cgra_ctxt.pe_cfg[trt_pe_type]['opGroup'][trt_pe_opGroup]:
-            op_keys.append(ok['name'])
         #self.logger.debug(f'{fn_name} ||| Searching blk_avail_pe for keys = {op_keys}')
         # Remove target from blk_avail_pe
+        #for k in op_keys:
         for k in op_keys:
             for i, pd in enumerate(blk_avail_pe[k]):
                 if (pd[0] == trt_pe_ID and pd[1] == trt_pe_opGroup):
+                    linked = pd[2]
+                    if (linked == 1):
+                        del shadow_blk_avail_pe[k][i]
                     del blk_avail_pe[k][i]
     
     # Run placer on given dot file according to cgra_context built from config files
@@ -130,11 +136,13 @@ class placer:
             n_opcode = n.get('opcode')
             n_rank = int(n.get('rank'))
             n_blk = n_rank % self.cgra_ctxt.cgra_blocks
+            n_shadow_blk = mapper_ctxt.get_shadow_block(n_blk)
             # Find a free PE from avail_pe
             blk_avail_pe = avail_pe[n_blk]
             blk_pe_info = pe_info[n_blk]
-            blk_opcode_cost = self.cgra_ctxt.opcode_cost[n_blk]
             blk_candidate_list = blk_avail_pe.get(n_opcode, None)
+            shadow_blk_avail_pe = avail_pe[n_shadow_blk]
+            shadow_blk_candidate_list = shadow_blk_avail_pe.get(n_opcode, None)
             # Check if this is a routing operation
             route_opcode = self.assert_routing_opcode(n_opcode)
             if (blk_candidate_list is None and not route_opcode):
@@ -143,26 +151,26 @@ class placer:
             elif (blk_candidate_list is not None and len(blk_candidate_list) == 0 and not route_opcode):
                 self.logger.error(f'{fn_name} ||| No candidate PE available for PE_opcode[{n_opcode}] of node[{n_name}] !')
                 break
-            self.logger.debug(f'{fn_name} ||| node = {n_name}, opID = {n_opID}, opcode = {n_opcode}, opCost = {blk_opcode_cost[n_opcode]}, block = {n_blk}')
+            self.logger.debug(f'{fn_name} ||| node = {n_name}, opID = {n_opID}, opcode = {n_opcode}, opCost = {self.cgra_ctxt.opcode_cost[n_opcode]}, block = {n_blk}')
             self.logger.debug(f'{fn_name} ||| blk_pe_info[{n_blk}] before mutation: {blk_pe_info}')
             self.logger.debug(f'{fn_name} ||| blk_avail_pe[{n_blk}] before mutation: {blk_avail_pe}')
             # Peek at candidate PE's pe_ID, opGroup, and required-cost of opcode
-            target_opcode_cost = blk_opcode_cost[n_opcode]
-            target_pe_ID, target_pe_type, target_pe_opGroup = self.find_candidate_pe(blk_candidate_list, blk_pe_info, target_opcode_cost, route_opcode)
+            target_opcode_cost = self.cgra_ctxt.opcode_cost[n_opcode]
+            target_pe_ID, target_pe_type, target_pe_opGroup = self.find_candidate_pe(blk_candidate_list, blk_pe_info, target_opcode_cost, route_opcode, shadow_blk_candidate_list)
             if (target_pe_ID is None):
                 self.logger.error(f'{fn_name} ||| No target PE found for PE_opcode[{n_opcode}] of node[{n_name}], due to lack of PE ports !')
                 break
             # Place node in target PE by creating an entry in mapper_context's pe_meta
             # NOTE: Mapper context stores all relevant data using global_peID
-            global_target_pe_ID = self.cgra_ctxt.cgra_block_size * n_blk + target_pe_ID
+            global_target_pe_ID = mapper_ctxt.get_globalPE_id(target_pe_ID, n_blk)
             mapper_ctxt.add_node2pe(n_name, global_target_pe_ID)
-            mapper_ctxt.add_pe_meta_opcode(global_target_pe_ID, n_opcode)
+            mapper_ctxt.add_pe_meta_opcode(global_target_pe_ID, n_opcode, n_opID)
             self.logger.debug(f'{fn_name} ||| Successfully placed node[{n_name}], opID[{n_opID}], opcode[{n_opcode}] @ target PE[{global_target_pe_ID}]')
             # Update PE costs and Remove target pe from list(s) of candidate pe(s)
             self.update_pe_cost(target_pe_ID, target_opcode_cost, blk_pe_info)
             if (not route_opcode):
-                self.remove_target_pe(target_pe_ID, target_pe_type, target_pe_opGroup, blk_avail_pe)
-                self.logger.debug(f'{fn_name} ||| New blk_avail_pe[{n_blk}] after mutation: {blk_avail_pe}')
+                self.remove_target_pe(target_pe_ID, target_pe_type, target_pe_opGroup, blk_avail_pe, shadow_blk_avail_pe)
+                self.logger.debug(f'{fn_name} ||| New blk_avail_pe[{n_blk}] after mutation: {blk_avail_pe} \n New shadow_blk_pe[{n_shadow_blk}] after mutation: {shadow_blk_avail_pe}')
             self.logger.debug(f'{fn_name} ||| New blk_pe_info[{n_blk}] after mutation @ [{target_pe_ID}]: {blk_pe_info}')
             self.logger.debug(f'{fn_name} ||| node[{n_name}], opID[{n_opID}] with opcode[{n_opcode}]; placed @ blk[{n_blk}], peID[{target_pe_ID}], global_peID = {global_target_pe_ID}')
             # Update tracker

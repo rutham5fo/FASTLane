@@ -44,6 +44,29 @@ class mapper_context:
         logger.addHandler(file_handler)
         return logger
     
+    def get_shadow_block (self, block: int) -> int:
+        fn_name = mapper_context.get_shadow_block.__name__
+        shadow_blk = block if (block == 0 or block == self.cgra_blocks/2) else self.cgra_blocks - block
+        return shadow_blk
+    
+    def get_globalPE_id (self, pid: int, block: int) -> int:
+        fn_name = mapper_context.get_globalPE_id.__name__
+        # The absolute PE_id cannot be greater than self.cgra_blocks/2 since thats the number of physical blocks
+        # The PEs in the shadow blocks are simply the second TDM channel of physical blocks.
+        # But the global PE id can be greater than self.cgra_blocks/2 to accomodate the shadow region
+        gpid = self.cgra_block_size * block + pid
+        return gpid
+    
+    def get_localPE_id (self, gpid: int) -> int:
+        fn_name = mapper_context.get_localPE_id.__name__
+        lpid = int(gpid%self.cgra_block_size)
+        return lpid
+    
+    def get_block (self, gpid: int) -> int:
+        fn_name = mapper_context.get_block.__name__
+        block = int(gpid/self.cgra_block_size)
+        return block
+
     def add_node2pe (self, node_name: str=None, global_peID: int=None) -> bool:
         fn_name = mapper_context.add_node2pe.__name__
         ret_val = False
@@ -52,24 +75,94 @@ class mapper_context:
             ret_val = True
         return ret_val
     
+    # All about PE meta data template
+    def gen_pe_meta_template (self) -> dict:
+        fn_name = mapper_context.gen_pe_meta_template.__name__
+        t_pe_meta = {}
+        t_pe_meta['opcode'] = []                                            # Opcodes attached to the PE are added here as a tuple: (opcode_name, opcode_id)
+                                                                            # The opcode_id attached to the name helps in determining intra-PE routing
+        t_pe_meta['in_opID'] = [None for _ in range(self.cgra_radix)]       # The in_opID key holds the opIDs attached to the corresponding 
+                                                                            # input_paths to PE in ascending order of the input-paths.
+        t_pe_meta['out_opID'] = [None for _ in range(self.cgra_radix)]      # Similar to the in_opID, but for output paths.
+        return t_pe_meta
+    
     def create_pe_meta (self, global_peID: int) -> None:
         fn_name = mapper_context.create_pe_meta.__name__
-        # PE Metadata template
-        self.pe_meta[global_peID] = {}
-        self.pe_meta[global_peID]['opcode'] = []
-        self.pe_meta[global_peID]['in_opID'] = [None for _ in range(self.cgra_radix)]
-        self.pe_meta[global_peID]['out_opID'] = [None for _ in range(self.cgra_radix)]
+        # create PE Metadata using template
+        self.pe_meta[global_peID] = self.gen_pe_meta_template()
 
-    def add_pe_meta_opcode (self, global_peID: int=None, opcode: str='') -> bool:
+    def add_pe_meta_opcode (self, global_peID: int=None, opcode: str='', opID: int=None) -> bool:
         fn_name = mapper_context.add_pe_meta_opcode.__name__
         ret_val = False
         if (global_peID is not None):
             if (self.pe_meta.get(global_peID, None) is None):
                 self.create_pe_meta(global_peID)
             # Add opcode to pe's Metadata
-            self.pe_meta[global_peID]['opcode'] += [opcode]
+            self.pe_meta[global_peID]['opcode'].append((opcode, opID))
             ret_val = True
         return ret_val
+    
+    def combine_pe_meta (self, dest_meta: dict, src_meta: dict) -> dict:
+        fn_name = mapper_context.combine_pe_meta.__name__
+        # Create result placeholder
+        res_meta = dict(dest_meta)
+        # Copy over all meta data from src to dest
+        for opc in src_meta['opcode']:
+            res_meta['opcode'].append(opc)
+        for i_opID in src_meta['in_opID']:
+            # The combining of input_paths follows the strict order of
+            # physical block's i_opIDs of len(cgra_radix), followed by
+            # shadow block's i_opIDs lf len(cgra_radix).
+            res_meta['in_opID'].append(i_opID)
+        for o_opID in src_meta['out_opID']:
+            # The output_paths follow the same rule of combining
+            # as the input paths.
+            res_meta['out_opID'].append(o_opID)
+        return res_meta
+
+    def condense_pe_meta (self) -> None:
+        # TODO: If a shadow node is used but its counter-real node is unused, this method will fail
+        fn_name = mapper_context.condense_pe_meta.__name__
+        # Var to keep track all the keyes we have copied
+        t_src_done = []
+        # Make a copy of pe_meta dict
+        t_pe_meta = dict(self.pe_meta)
+        # Get keys to iterate on
+        pe_meta_keys = self.pe_meta.keys()
+        self.logger.debug(f'{fn_name} ||| pe_meta before condensing: {t_pe_meta} \n keyes = {pe_meta_keys}')
+        for i, meta_key in enumerate(pe_meta_keys):
+            n_gpid = meta_key
+            n_lpid = self.get_localPE_id(n_gpid)
+            n_blk = self.get_block(n_gpid)
+            n_shadow_blk = self.get_shadow_block(n_blk)
+            if (n_blk != n_shadow_blk):
+                # Absorb into the lower/physical block
+                dest_blk = n_blk if (n_blk < n_shadow_blk) else n_shadow_blk
+                src_blk = n_shadow_blk if (n_blk < n_shadow_blk) else n_blk
+                n_dgpid = self.get_globalPE_id(n_lpid, dest_blk)
+                n_sgpid = self.get_globalPE_id(n_lpid, src_blk)
+                # Case 0: Ignore PEs that are done
+                if (n_sgpid in t_src_done):
+                    continue
+                # Case 1: Destination PE exists but source does not
+                elif (n_dgpid in pe_meta_keys and not n_sgpid in pe_meta_keys):
+                    # Fill append empty template to destination
+                    t_pe_meta[n_dgpid] = self.combine_pe_meta(self.pe_meta[n_dgpid], self.gen_pe_meta_template())
+                    # Nothing to delete
+                # Case 2: Destination PE does not exist but source does
+                elif (not n_dgpid in pe_meta_keys and n_sgpid in pe_meta_keys):
+                    t_pe_meta[n_dgpid] = self.combine_pe_meta(self.gen_pe_meta_template(), self.pe_meta[n_sgpid])
+                    # Delete the source (shadow metadata)
+                    del t_pe_meta[n_sgpid]
+                # Case 3: Destination and source PE exist
+                else:
+                    t_pe_meta[n_dgpid] = self.combine_pe_meta(self.pe_meta[n_dgpid], self.pe_meta[n_sgpid])
+                    # Delete the source (shadow metadata)
+                    del t_pe_meta[n_sgpid]
+                self.logger.debug(f'{fn_name} ||| iter[{i}] | Condensing src_pe[{n_sgpid}, {src_blk}] into dest_pe[{n_dgpid}, {dest_blk}]')
+                t_src_done.append(n_sgpid)
+        # Re-assign
+        self.pe_meta = t_pe_meta
     
     def make_route_pairs (self, src_tracker: list, dest_tracker: list) -> bool:
         fn_name = mapper_context.make_route_pairs.__name__
@@ -86,7 +179,9 @@ class mapper_context:
                         if (len(src_port) == len(dest_port)):
                             for route_pair in list(zip(src_port, dest_port)):
                                 # Normalize global_PE_id back to local, block level PE_ids
-                                local_route_pair = (int(route_pair[0]%self.cgra_block_size), int(route_pair[1]%self.cgra_block_size))
+                                src_lpid = self.get_localPE_id(route_pair[0])
+                                dest_lpid = self.get_localPE_id(route_pair[1])
+                                local_route_pair = (src_lpid, dest_lpid)
                                 self.route_pairs[blk_sel][port_sel].append(local_route_pair)
                         else:
                             ret_val = False

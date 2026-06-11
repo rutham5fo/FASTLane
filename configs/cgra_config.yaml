@@ -2,12 +2,30 @@
 # All CGRA specification goes here
 #-------------------------------------------------
 
+# This key is the CGRA's name
 CGRA:
   # Only radix = 2, blocks = 2 Supported at the moment !!
-  name: test                      # CGRA Name
   radix: 2                        # Specifies the number of inputs and outputs per PE
-  blocks: 2                       # Number of blocks/columns in the CGRA
-  block_size: 256                   # Total number of elements/PE per block
+
+  overload: 1                     # Flag to set PE overloading of middle-blocks. Legal values = 0, 1
+                                  # Ex: If overload is 1, then all PEs in the middle blocks can be used twice,
+                                  #     for non-routing operations i.e., these PEs Have their ALUs TDMd.
+                                  #     Else, a PE may only be used once.
+
+  blocks: 4                       # Number of blocks/columns in the CGRA
+  block_size: 64                   # Total number of elements/PE per block
   composition:                    # Composition of each block
-    - {'Special': 256}                # Block 0 contains 8 basic type FUs | A specific PE order may be described here -> {'Basic': 2, 'Special': 4, 'Basic': 2}
-    - {'Special': 256}
+                                  # Block 0 contains 8 basic type FUs | A specific PE order may be described here -> {'Basic': 2, 'Special': 4, 'Basic': 2}
+    - {PE_float: 64}
+    - {PE_float: 64}
+    - {PE_float: 64}
+    - {PE_float: 64}
+
+    #- {PE_float: 64, PE_int: 64}
+    #- {PE_float: 64, PE_int: 64}
+    #- {PE_float: 64, PE_int: 64}
+    #- {PE_float: 64, PE_int: 64}
+    #- {PE_float: 64, PE_int: 64}
+    #- {PE_float: 64, PE_int: 64}
+    #- {PE_float: 64, PE_int: 64}
+    #- {PE_float: 64, PE_int: 64}
