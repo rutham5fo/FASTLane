@@ -22,19 +22,18 @@ class cgra_context:
         # State Vars
         self.cgra_name = None
         self.cgra_radix = None
+        self.cgra_predicate = None
+        self.cgra_overload = None
         self.cgra_phy_blocks = None
         self.cgra_blocks = None
         self.cgra_block_size = None
         self.cgra_size = None
-        self.cgra_attr = {}
         # Maintain a dict, per block, for each opcode, holding a list of valid PEs that we can map to
-        self.avail_pe = []                      # [(PE_id, opGroup, linked), ...]
-        # Maintain a dict for all opcode costs (including routing opcodes)
-        self.opcode_cost = {}
+        self.avail_pe = []                      # [(PE_id, PE_type, contexts, linked), ...]
         # Maintain a list to track the availability of in/out ports in a PE, per block
         # The PE_ID is the location of PE along the list. This is by virtue of CGRA construction.
         # CGRA construction/PE ordering is set in cgra_config.yaml
-        self.pe_info = []                       # [[(pe_type), [input, output]], ...]
+        self.pe_info = []                       # [[(pe_type), [[data_input, data_output], [pred_input, pred_output]]], ...]
         if (cgra_name and cgra_config_fpath and pe_config_fpath):
             self.cgra_name = cgra_name
             self.get_configs(cgra_config_fpath, pe_config_fpath)
@@ -79,6 +78,7 @@ class cgra_context:
     def load_state (self) -> None:
         fn_name = cgra_context.load_state.__name__
         self.cgra_radix = int(self.cgra_cfg[self.cgra_name]['radix'])
+        self.cgra_predicate = int(self.cgra_cfg[self.cgra_name]['predicate'])
         self.cgra_overload = int(self.cgra_cfg[self.cgra_name]['overload'])
         self.cgra_phy_blocks = int(self.cgra_cfg[self.cgra_name]['blocks'])
         # The number of blocks is always computed with the assumption of an overload
@@ -131,20 +131,19 @@ class cgra_context:
                         for op_name in op_list:
                             #self.logger.debug(f'{fn_name} ||| OP = {op_name}')
                             blk_pe_linked = 1 if (blk != 0 and blk != self.cgra_phy_blocks-1 and self.cgra_overload == 0) else 0
-                            blk_avail_pe[op_name] = blk_avail_pe.get(op_name, []) + [(pid, opG, blk_pe_linked)]
-                    blk_pe_info.append([(pe_type,), [self.cgra_radix, self.cgra_radix]])    # PE_type is a tuple to ensure immutability
+                            blk_avail_pe[op_name] = blk_avail_pe.get(op_name, []) + [(pid, pe_type, 1, blk_pe_linked)]
+                    t_pred_resource = [1, 1] if (self.cgra_predicate) else [0, 0]       # Since there is only one predicate channel
+                    t_datapath_resource = [self.cgra_radix, self.cgra_radix]            # Since there are radix no. of channels
+                    blk_pe_info.append([(pe_type,), [t_datapath_resource, t_pred_resource]])    # PE_type is a tuple to ensure immutability
             self.avail_pe.append(blk_avail_pe)
             self.pe_info.append(blk_pe_info)
-        # Add opCode cost to opcode_cost dict from opCode definition
-        for op_def in self.pe_cfg['OPdef']:
-            op_name = op_def['name']
-            op_in_cost = op_def['cost']['in']
-            op_out_cost = op_def['cost']['out']
-            self.opcode_cost[op_name] = (op_in_cost, op_out_cost)
         # Print state vars
         self.logger.debug(f'{fn_name} ||| avail_pe = {self.avail_pe}')
-        self.logger.debug(f'{fn_name} ||| opcode_cost = {self.opcode_cost}')
         self.logger.debug(f'{fn_name} ||| pe_info = {self.pe_info}')
+    
+    def get_relative_rank (self, rank: int) -> int:
+        rel_rank = (self.cgra_phy_blocks-1) - abs(int(rank%(2*(self.cgra_phy_blocks-1)))-(self.cgra_phy_blocks-1))
+        return rel_rank
 
 def _test ():
     fn_name = _test.__name__

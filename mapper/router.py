@@ -10,7 +10,7 @@ from mapper.benes import benes
 
 class router:
 
-    def __init__ (self, cgra_context=None, logger_name: str='', log_level: int=logging.INFO, log_dir: str='logs') -> None:
+    def __init__ (self, mapper_context=None, cgra_context=None, logger_name: str='', log_level: int=logging.INFO, log_dir: str='logs') -> None:
         fn_name = router.__init__.__name__
         # Setup logger
         self.logger_name = None
@@ -23,10 +23,11 @@ class router:
             self.logger = self.log_setup(self.logger_name, log_level, log_dir)
         # State vars
         self.cgra_ctxt = None
+        self.mapper_ctxt = None
         self.benes = None
         self.max_find_port_recursion = 0
-        if (cgra_context is not None):
-            self.load_cgra_context(cgra_context)
+        if (cgra_context is not None and mapper_context is not None):
+            self.load_context(mapper_context, cgra_context)
     
     def log_setup (self, logger_name, log_level, log_dir) -> logging:
         cwd = os.getcwd()
@@ -47,9 +48,10 @@ class router:
         logger.addHandler(file_handler)
         return logger
     
-    def load_cgra_context (self, cgra_context=None) -> bool:
+    def load_context (self, mapper_context=None, cgra_context=None) -> bool:
         ret_val = False
-        if (cgra_context is not None):
+        if (mapper_context is not None and cgra_context is not None):
+            self.mapper_ctxt = mapper_context
             self.cgra_ctxt = cgra_context
             self.max_find_port_recursion = self.cgra_ctxt.cgra_radix**2
             # Create Benes
@@ -119,7 +121,7 @@ class router:
         return routed
     
     # Run router on given dot file according to cgra_context built from config files
-    def run (self, dot_ctxt=None, mapper_ctxt=None) -> bool:
+    def run (self, dot_ctxt=None) -> bool:
         fn_name = router.run.__name__
         # Setup path-tracker
         # A path is a Benes connection set from Block A to opposing Block B
@@ -137,15 +139,15 @@ class router:
             n_opID = n.get('opID')
             _, n_children = dot_ctxt.get_children(n_name)
             n_blk = n_rank % self.cgra_ctxt.cgra_blocks
-            n_pe = mapper_ctxt.node2pe[n_name]
+            n_pe = self.mapper_ctxt.node2pe[n_name]
             # Find shadow equivalents
-            n_shadow_blk = mapper_ctxt.get_shadow_block(n_blk)
-            t_ln_pe = mapper_ctxt.get_localPE_id(n_pe)
-            n_shadow_pe = mapper_ctxt.get_globalPE_id(t_ln_pe, n_shadow_blk)
+            n_shadow_blk = self.mapper_ctxt.get_shadow_block(n_blk)
+            t_ln_pe = self.mapper_ctxt.get_localPE_id(n_pe)
+            n_shadow_pe = self.mapper_ctxt.get_globalPE_id(t_ln_pe, n_shadow_blk)
             # The blk_sel values for src/path-trackers depend on which direction
             # the edge is traveling in. All forward paths will be in the same 
             # region as current block. But, all reverse edges will be in the shadow region.
-            n_out_opID = mapper_ctxt.pe_meta[n_pe]['out_opID']
+            n_out_opID = self.mapper_ctxt.pe_meta[n_pe]['out_opID']
             blk_path_tracker = path_tracker[n_blk]
             blk_src_tracker = source_tracker[n_blk]
             self.logger.debug(f'{fn_name} ||| Routing (node[{n_name}], opID[{n_opID}]) placed @ PE[{n_pe}]')
@@ -170,8 +172,8 @@ class router:
                 ch_name = ch.get_name()
                 ch_opID = ch.get('opID')
                 ch_blk = ch_rank % self.cgra_ctxt.cgra_blocks
-                ch_pe = mapper_ctxt.node2pe[ch_name]
-                ch_in_opID = mapper_ctxt.pe_meta[ch_pe]['in_opID']
+                ch_pe = self.mapper_ctxt.node2pe[ch_name]
+                ch_in_opID = self.mapper_ctxt.pe_meta[ch_pe]['in_opID']
                 port_children = [(None, None) for _ in range(self.cgra_ctxt.cgra_radix)]   # [(child_node_id, child_PE_id)]
                 routed = False
                 recursion_cnt = 0
@@ -183,12 +185,12 @@ class router:
                 # Except the special cases checked for below, which always go through current region.
                 if (ch_blk > n_blk or n_blk == 0 or n_blk == self.cgra_ctxt.cgra_phy_blocks-1 or (ch_blk == 0 and n_blk == self.cgra_ctxt.cgra_blocks-1)):
                     # Go through current region's source resources
-                    n_out_opID = mapper_ctxt.pe_meta[n_pe]['out_opID']
+                    n_out_opID = self.mapper_ctxt.pe_meta[n_pe]['out_opID']
                     blk_path_tracker = path_tracker[n_blk]
                     blk_src_tracker = source_tracker[n_blk]
                 else:
                     # Go through shadow region's source resources
-                    n_out_opID = mapper_ctxt.pe_meta[n_shadow_pe]['out_opID']
+                    n_out_opID = self.mapper_ctxt.pe_meta[n_shadow_pe]['out_opID']
                     blk_path_tracker = path_tracker[n_shadow_blk]
                     blk_src_tracker = source_tracker[n_shadow_blk]
                 # Source node sanity check
@@ -212,20 +214,20 @@ class router:
                 break
         self.logger.info(f'{fn_name} ||| Routing Phase-1: Complete')
         # Collapse shadow PEs meta into physical region
-        mapper_ctxt.condense_pe_meta()
+        self.mapper_ctxt.condense_pe_meta()
         # Make src-dest pairs with local_PE_ids for Benes router
-        mapper_ctxt.make_route_pairs(source_tracker, path_tracker)
+        self.mapper_ctxt.make_route_pairs(source_tracker, path_tracker)
         # Start Benes router
         if (routed):
             for blk in range(self.cgra_ctxt.cgra_blocks):
                 for path in range(self.cgra_ctxt.cgra_radix):
                     # Get corresponding path's permutation
-                    perm = mapper_ctxt.route_pairs[blk][path]
+                    perm = self.mapper_ctxt.route_pairs[blk][path]
                     self.benes.reset_benes()
                     path_scbs = self.benes.run(perm)
                     if (path_scbs is not None):
                         self.logger.info(f'{fn_name} ||| Routing Phase-2, Block[{blk}], Path[{path}]: Complete')
-                        mapper_ctxt.path_scbs[blk][path] = path_scbs
+                        self.mapper_ctxt.path_scbs[blk][path] = path_scbs
                     else:
                         self.logger.error(f'{fn_name} ||| Routing Phase-2: FAILED \n Benes routing failed for block[{blk}], path[{path}], permutation = {perm}')
                         routed = False

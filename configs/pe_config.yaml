@@ -2,25 +2,43 @@
 # All PE/Functional-Unit specification goes here
 #-------------------------------------------------
 
-#--------------------- OpCode Definition -------------------
-# Common to all PEs
+#--------------------- Node Attributes and Common Opcode categories -------------------
 
-OPdef:                                                  # Do not change the name of this key, cgra_context.py searches for it.
-  - {name: 'bridge', type: 'route', cost: {"in": 1, "out": 1}}                     # Used to bridge non-bipartite nodes
-  - {name: 'split', type: 'route', cost: {"in": 1, "out": 2}}                     # Used to increase node fanout
-  - {name: 'merge', type: 'route', cost: {"in": 2, "out": 1}}                     # Used to increase node fanin
-  - {name: 'add', type: 'alu', cost: {"in": 2, "out": 1}}
-  - {name: 'sub', type: 'alu', cost: {"in": 2, "out": 1}}
-  - {name: 'mul', type: 'alu', cost: {"in": 2, "out": 1}}
-  - {name: 'div', type: 'alu', cost: {"in": 2, "out": 1}}
-  - {name: 'fadd', type: 'alu', cost: {"in": 2, "out": 1}}
-  - {name: 'fsub', type: 'alu', cost: {"in": 2, "out": 1}}
-  - {name: 'fmul', type: 'alu', cost: {"in": 2, "out": 1}}
-  - {name: 'fdiv', type: 'alu', cost: {"in": 2, "out": 1}}
-  - {name: 'sqrt', type: 'alu', cost: {"in": 2, "out": 1}}
-  - {name: 'load', type: 'mem', cost: {"in": 1, "out": 1}}                     # Addr in, Data out
-  - {name: 'store', type: 'mem', cost: {"in": 2, "out": 0}}                     # Addr in, Data in
+Attributes:
+  - {name: 'constVal', translate: 'const'}
+  - {name: 'direct_in', translate: 'input'}
+  - {name: 'direct_out', translate: 'output'}
+  - {name: 'reflexive', translate: 'acc'}
 
+#OPdef:                                                  # Do not change the name of this key, cgra_context.py searches for it.
+#  # Common
+#  - {name: 'bridge', type: 'route'}                     # Used to bridge non-bipartite nodes
+#  - {name: 'split', type: 'route'}                     # Used to increase node fanout
+#  - {name: 'merge', type: 'route'}                     # Used to increase node fanin
+#  # PE specific
+#  - {name: 'input', type: 'IO'}
+#  - {name: 'output', type: 'IO'}
+#  - {name: 'add', type: 'alu'}
+#  - {name: 'sub', type: 'alu'}
+#  - {name: 'mul', type: 'alu'}
+#  - {name: 'div', type: 'alu'}
+#  - {name: 'fadd', type: 'alu'}
+#  - {name: 'fsub', type: 'alu'}
+#  - {name: 'fmul', type: 'alu'}
+#  - {name: 'fdiv', type: 'alu'}
+#  - {name: 'sqrt', type: 'alu'}
+#  - {name: 'icmp', type: 'alu'}
+#  - {name: 'br', type: 'alu'}
+#  - {name: 'phi', type: 'alu'}
+#  - {name: 'load', type: 'mem'}                     # Addr in, Data out
+#  - {name: 'store', type: 'mem'}                     # Addr in, Data in
+#  - {name: 'const', type: 'reg'}
+#  - {name: 'acc', type: 'reg'}
+
+Routing:
+  - 'bridge'
+  - 'split'
+  - 'merge'
 
 #--------------------- PE Description -----------------
 # Customize by adding opGroups and Ops
@@ -34,6 +52,12 @@ PE_int:
       - 'div'
       - 'load'
       - 'store'
+    reg:
+      - 'const'
+      - 'acc'
+    IO:
+      - 'input'
+      - 'output'
 
 PE_float:
   opGroup:
@@ -45,3 +69,10 @@ PE_float:
       - 'sqrt'
       - 'load'
       - 'store'
+    imm:
+      - 'const'
+    reg:
+      - 'acc'
+    IO:
+      - 'input'
+      - 'output'

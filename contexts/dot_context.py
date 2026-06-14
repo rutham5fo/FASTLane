@@ -133,12 +133,11 @@ class dot_context:
                         n.set(key, val)
                 break
     
-    def get_children (self, node_name: str="") -> tuple:
+    def get_children (self, node_name: str="") -> list:
         fn_name = dot_context.get_children.__name__
         # Find all destination nodes the const sources connect to
         # Similarly get the fanout of each const source node
         children = []
-        node_fanout = []
         if (node_name):
             # Find corresponding node metadata
             for c_name in self.node_meta[node_name]["children"]:
@@ -148,14 +147,12 @@ class dot_context:
                     if (len(cn) > 1):
                         self.logger.warning(f'{fn_name} ||| Multiple nodes with identical name; Returning first occurence')
                     children.append(cn[0])
-            node_fanout.append(self.node_meta[node_name]["fanout"])
-        return (node_fanout, children)
+        return children
     
-    def get_parents (self, node_name: str="") -> tuple:
+    def get_parents (self, node_name: str="") -> list:
         fn_name = dot_context.get_parents.__name__
         # Find parents and fanin of sources
         parents = []
-        node_fanin = []
         if (node_name):
             # Find corresponding node's metadata
             for p_name in self.node_meta[node_name]["parents"]:
@@ -165,9 +162,28 @@ class dot_context:
                     if (len(pn) > 1):
                         self.logger.warning(f'{fn_name} ||| Multiple nodes with identical name; Returning first occurence')
                     parents.append(pn[0])
-            node_fanin.append(self.node_meta[node_name]["fanin"])
-        return (node_fanin, parents)
+        return parents
     
+    def get_node (self, node_name: str='') -> pydot.Node | None:
+        fn_name = dot_context.get_node.__name__
+        ret_node = None
+        if (node_name):
+            for n in self.dot_nodes:
+                if (n.get_name() == node_name):
+                    ret_node = n
+                    break
+        return ret_node
+    
+    def get_edge (self, source_name: str='', destination_name: str='') -> pydot.Edge | None:
+        fn_name = dot_context.get_edge.__name__
+        ret_edge = None
+        if (source_name and destination_name):
+            for e in self.dot_edges:
+                if (e.get_source() == source_name and e.get_destination() == destination_name):
+                    ret_edge = e
+                    break
+        return ret_edge
+
     def new_node (self, node_name: str="", node_attributes_kv: list=[]) -> pydot.Node | None:
         fn_name = dot_context.new_node.__name__
         ret_node = None

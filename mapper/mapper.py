@@ -39,8 +39,8 @@ class mapper:
                 self.logger.error(f'{fn_name} ||| Execption: {ex}')
                 raise
             self.mapper_ctxt = mapper_context(self.cgra_ctxt.cgra_blocks, self.cgra_ctxt.cgra_block_size, self.cgra_ctxt.cgra_radix, logger_name=self.logger_name)
-            self.plcr = placer(self.cgra_ctxt, log_level=logging.DEBUG)
-            self.rtr = router(self.cgra_ctxt, log_level=logging.DEBUG)
+            self.plcr = placer(self.mapper_ctxt, self.cgra_ctxt, log_level=logging.DEBUG)
+            self.rtr = router(self.mapper_ctxt, self.cgra_ctxt, log_level=logging.DEBUG)
     
     def log_setup (self, logger_name, log_level, log_dir) -> logging:
         cwd = os.getcwd()

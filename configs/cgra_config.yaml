@@ -4,9 +4,9 @@
 
 # This key is the CGRA's name
 CGRA:
-  # Only radix = 2, blocks = 2 Supported at the moment !!
+  # Only radix = 2 supported at the moment !!
   radix: 2                        # Specifies the number of inputs and outputs per PE
-
+  predicate: 0                    # Flag to enable predicate support. Legal values = 0, 1
   overload: 1                     # Flag to set PE overloading of middle-blocks. Legal values = 0, 1
                                   # Ex: If overload is 1, then all PEs in the middle blocks can be used twice,
                                   #     for non-routing operations i.e., these PEs Have their ALUs TDMd.
