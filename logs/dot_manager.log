@@ -1,31 +1,30 @@
-2026-06-15 00:22:44.368 - [DEBUG] ||| get_graph ||| Read dot_file "/mnt/c/Users/91988/Documents/Amruth/Files/Projects/FASTLane/dots/srcs/test.dot": 
+2026-06-15 13:51:06.611 - [DEBUG] ||| get_graph ||| Read dot_file "/mnt/c/Users/91988/Documents/Amruth/Files/Projects/FASTLane/dots/srcs/test.dot": 
  dot_nodes = ['const1', 'const2', 'const3', 'const4', 'global_var', 'i10_icmp', 'i12_load', 'i13_add', 'i14_store', 'i15_add', 'i16_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_data_size1', 'i4_data_size2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_data_size1', 'i6_data_size2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add', 'i9_output', 'input0', 'input1', 'const4_dup0'] 
  dot_edges = ['const1', 'const2', 'const3', 'const4', 'global_var', 'global_var', 'i10_icmp', 'i12_load', 'i13_add', 'i13_add', 'i15_add', 'i16_add', 'i17_add', 'i17_add', 'i17_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_data_size1', 'i4_data_size2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_data_size1', 'i6_data_size2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add', 'i9_add', 'input0', 'input1', 'const4_dup0']
-2026-06-15 00:22:44.371 - [DEBUG] ||| update ||| Updated graph (absorb_reflexive): 
+2026-06-15 13:51:06.612 - [DEBUG] ||| update ||| Updated graph (absorb_reflexive): 
  New dot_nodes = ['const1', 'const2', 'const3', 'const4', 'global_var', 'i10_icmp', 'i12_load', 'i13_add', 'i14_store', 'i15_add', 'i16_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_data_size1', 'i4_data_size2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_data_size1', 'i6_data_size2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add', 'i9_output', 'input0', 'input1', 'const4_dup0'] 
  New dot_edges = ['const1', 'const2', 'const3', 'const4', 'global_var', 'global_var', 'i10_icmp', 'i12_load', 'i13_add', 'i13_add', 'i15_add', 'i16_add', 'i17_add', 'i17_add', 'i17_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_data_size1', 'i4_data_size2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_data_size1', 'i6_data_size2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add', 'input0', 'input1', 'const4_dup0']
-2026-06-15 00:22:44.372 - [DEBUG] ||| update ||| Updated graph (absorb_constants): 
+2026-06-15 13:51:06.614 - [DEBUG] ||| update ||| Updated graph (absorb_constants): 
  New dot_nodes = ['global_var', 'i10_icmp', 'i12_load', 'i13_add', 'i14_store', 'i15_add', 'i16_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add', 'i9_output', 'input0', 'input1'] 
  New dot_edges = ['global_var', 'global_var', 'i10_icmp', 'i12_load', 'i13_add', 'i13_add', 'i15_add', 'i16_add', 'i17_add', 'i17_add', 'i17_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add', 'input0', 'input1']
-2026-06-15 00:22:44.374 - [DEBUG] ||| update ||| Updated graph (absorb_IO): 
+2026-06-15 13:51:06.615 - [DEBUG] ||| update ||| Updated graph (absorb_IO): 
  New dot_nodes = ['i10_icmp', 'i12_load', 'i13_add', 'i14_store', 'i15_add', 'i16_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add'] 
  New dot_edges = ['i10_icmp', 'i12_load', 'i13_add', 'i13_add', 'i15_add', 'i16_add', 'i17_add', 'i17_add', 'i17_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul']
-2026-06-15 00:22:44.375 - [DEBUG] ||| update ||| Updated graph (annotate_data_edges): 
+2026-06-15 13:51:06.616 - [DEBUG] ||| update ||| Updated graph (annotate_data_edges): 
  New dot_nodes = ['i10_icmp', 'i12_load', 'i13_add', 'i14_store', 'i15_add', 'i16_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add'] 
  New dot_edges = ['i10_icmp', 'i12_load', 'i13_add', 'i13_add', 'i15_add', 'i16_add', 'i17_add', 'i17_add', 'i17_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul']
-2026-06-15 00:22:44.376 - [DEBUG] ||| update ||| Updated graph (annotate_predicate_edges): 
+2026-06-15 13:51:06.617 - [DEBUG] ||| update ||| Updated graph (annotate_predicate_edges): 
  New dot_nodes = ['i10_icmp', 'i12_load', 'i13_add', 'i14_store', 'i15_add', 'i16_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add'] 
  New dot_edges = ['i10_icmp', 'i12_load', 'i13_add', 'i13_add', 'i15_add', 'i16_add', 'i17_add', 'i17_add', 'i17_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul']
-2026-06-15 00:22:44.377 - [DEBUG] ||| legalize_fanout ||| Iter[0]
-2026-06-15 00:22:44.377 - [DEBUG] ||| legalize_fanout ||| Iter[2]
-2026-06-15 00:22:44.378 - [DEBUG] ||| update ||| Updated graph (legalize_incidence): 
+2026-06-15 13:51:06.618 - [DEBUG] ||| legalize_fanout ||| Iter[0]
+2026-06-15 13:51:06.619 - [DEBUG] ||| legalize_fanout ||| Iter[2]
+2026-06-15 13:51:06.619 - [DEBUG] ||| update ||| Updated graph (legalize_incidence): 
  New dot_nodes = ['i10_icmp', 'i12_load', 'i13_add', 'i14_store', 'i15_add', 'i16_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add', 'i17_add_fout_0', 'i17_add_fout_1'] 
  New dot_edges = ['i10_icmp', 'i12_load', 'i13_add', 'i13_add', 'i15_add', 'i16_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i17_add_fout_0', 'i17_add_fout_0', 'i17_add', 'i17_add_fout_1', 'i17_add_fout_1', 'i17_add']
-2026-06-15 00:22:44.616 - [DEBUG] ||| get_graph ||| Read dot_file "tmp_rank_dest.dot": 
+2026-06-15 13:51:06.756 - [DEBUG] ||| get_graph ||| Read dot_file "tmp_rank_dest.dot": 
  dot_nodes = ['graph', 'node', 'i10_icmp', 'i16_add', 'i12_load', 'i13_add', 'i14_store', 'i17_add', 'i15_add', 'i17_add_fout_0', 'i17_add_fout_1', 'i4_add1', 'i4_add2', 'i5_load', 'i4_mul1', 'i4_mul2', 'i8_mul', 'i6_add1', 'i6_add2', 'i7_load', 'i6_mul1', 'i6_mul2', 'i9_add'] 
  dot_edges = ['i10_icmp', 'i12_load', 'i13_add', 'i13_add', 'i15_add', 'i16_add', 'i17_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i17_add_fout_0', 'i17_add_fout_0', 'i17_add_fout_1', 'i17_add_fout_1']
-2026-06-15 00:22:44.622 - [DEBUG] ||| make_bipartite ||| og_edge = i4_add2 -> i5_load [operand=addr, data=true];
-2026-06-15 00:22:44.623 - [DEBUG] ||| make_bipartite ||| og_edge = i17_add_fout_1 -> i10_icmp [operand=LHS, data=true];
-2026-06-15 00:22:44.623 - [DEBUG] ||| update ||| Updated graph (make_bipartite): 
- New dot_nodes = ['i10_icmp', 'i12_load', 'i13_add', 'i14_store', 'i15_add', 'i16_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add', 'i17_add_fout_0', 'i17_add_fout_1', 'extd_i4_add2_0_0', 'extd_i17_add_fout_1_0_1', 'extd_i17_add_fout_1_0_0'] 
- New dot_edges = ['i10_icmp', 'i12_load', 'i13_add', 'i13_add', 'i15_add', 'i16_add', 'i4_add1', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i17_add_fout_0', 'i17_add_fout_0', 'i17_add', 'i17_add_fout_1', 'i17_add', 'extd_i4_add2_0_0', 'i4_add2', 'extd_i17_add_fout_1_0_1', 'extd_i17_add_fout_1_0_0', 'i17_add_fout_1']
+2026-06-15 13:51:06.761 - [DEBUG] ||| make_bipartite ||| og_edge = i4_add2 -> i5_load [operand=addr, data=true];
+2026-06-15 13:51:06.761 - [DEBUG] ||| update ||| Updated graph (make_bipartite): 
+ New dot_nodes = ['i10_icmp', 'i12_load', 'i13_add', 'i14_store', 'i15_add', 'i16_add', 'i17_add', 'i4_add1', 'i4_add2', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i9_add', 'i17_add_fout_0', 'i17_add_fout_1', 'extd_i4_add2_0_0'] 
+ New dot_edges = ['i10_icmp', 'i12_load', 'i13_add', 'i13_add', 'i15_add', 'i16_add', 'i4_add1', 'i4_mul1', 'i4_mul2', 'i5_load', 'i6_add1', 'i6_add2', 'i6_mul1', 'i6_mul2', 'i7_load', 'i8_mul', 'i17_add_fout_0', 'i17_add_fout_0', 'i17_add', 'i17_add_fout_1', 'i17_add_fout_1', 'i17_add', 'i4_add2', 'extd_i4_add2_0_0']

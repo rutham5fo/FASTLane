@@ -46,7 +46,7 @@ class mapper_context:
     
     def get_shadow_block (self, block: int) -> int:
         fn_name = mapper_context.get_shadow_block.__name__
-        shadow_blk = block if (block == 0 or block == self.cgra_blocks/2) else self.cgra_blocks - block
+        shadow_blk = 0 if (block == 0) else self.cgra_blocks - block
         return shadow_blk
     
     def get_globalPE_id (self, pid: int, block: int) -> int:

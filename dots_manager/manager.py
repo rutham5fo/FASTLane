@@ -338,7 +338,12 @@ class dot_manager:
         # We work with the relative rank of the node post DFG folding.
         # This enables us to work with displacement (shortest path) and constrains 
         # the relative rank into a triangle wave within the interval [0, blocks).
-        get_rel_rank = lambda r, b: (b-1) - abs(int(r%(2*(b-1)))-(b-1))
+        get_mod_rank = lambda r, b: int(r%(2*(b-1)))
+        get_rel_rank = lambda r, b: (b-1) - abs(get_mod_rank(r, b)-(b-1))
+        get_node_region = lambda r, b: 1 if (get_mod_rank(r,b) < b-1) else -1
+        get_bridge_dir = lambda src, dst, b: 1 if ((get_rel_rank(dst, b)-get_rel_rank(src, b))*get_node_region(src, b) > 0) else -1
+        get_mod_shadow_rank = lambda r, b: 0 if (get_mod_rank(r, b) == 0) else 2*(b-1) - get_mod_rank(r, b)
+        get_shadow_rank = lambda r, b: r + (get_mod_shadow_rank(r, b) - get_mod_rank(r, b))
         # Once the relative ranks are obtained, the absolute distance between the rank is computed.
         # For distances greater than 1, the appropriate number of bridge nodes are added to the edge.
         # NOTE: The bridge nodes must be constructed from the perspective of the destination node.
@@ -357,14 +362,13 @@ class dot_manager:
                 rel_dest_rank = get_rel_rank(dest_rank, blocks)
                 #self.logger.debug(f'{fn_name} ||| src ({src_name}) rank = {src_rank}, rel_src_rank = {rel_src_rank}; dest ({dest_name}) rank = {dest_rank}, rel_dest_rank = {rel_dest_rank}')
                 # Check if both nodes are not adjacent
-                set_diff = abs(rel_src_rank-rel_dest_rank)
+                set_diff = abs(rel_dest_rank-rel_src_rank)
                 # If they are on the same block, i.e., set_diff = 0, force them appart by a single block
                 forced_set_diff = 2 if (set_diff == 0) else set_diff
                 max_bridges = forced_set_diff-1
                 # Account for corner case when bridge rank can go negative
                 # In such cases, increment from source_rank instead.
-                bridge_seed_rank = src_rank+1 if (dest_rank-max_bridges < 0) else dest_rank-1
-                bridge_rank_dir = 1 if (dest_rank-max_bridges < 0) else -1
+                bridge_seed_rank = src_rank+1 if (get_bridge_dir(src_rank, dest_rank, blocks) > 0) else get_shadow_rank(src_rank, blocks)+1
                 bridge_attr = [("operand", "any1input")]
                 if (set_diff != 1):
                     # Find edge connecting src and dest
@@ -382,21 +386,21 @@ class dot_manager:
                     # Main
                     #self.logger.debug(f'{fn_name} ||| forced_set_diff = {forced_set_diff}, max_bridges = {max_bridges}')
                     for b in range(max_bridges):
-                        bridge_child_name = dest_name if (b == 0) else f'extd_{src_name}_{cid}_{max_bridges-b}'
-                        bridge_name = f'extd_{src_name}_{cid}_{max_bridges-1-b}'
-                        bridge_rank = str(bridge_seed_rank+(b*bridge_rank_dir))
+                        bridge_base_name = src_name if (b == 0) else f'extd_{src_name}_{cid}_{b-1}'
+                        bridge_name = f'extd_{src_name}_{cid}_{b}'
+                        bridge_rank = str(bridge_seed_rank+b)
                         bridge_node_attr = [("opcode", "bridge"), ("opID", og_opID), ("rank", str(bridge_rank))]
                         bridge_node = self.dot_ctxt.new_node(bridge_name, bridge_node_attr)
                         self.dot_ctxt.dot_graph.add_node(bridge_node)
                         #self.logger.debug(f'{fn_name} ||| Created new bridge | name = {bridge_node.get_name()}, attributes = {list(bridge_node.get_attributes().items())}')
-                        bridge_child_edge_attr = og_edge_attr if (b == 0) else bridge_attr
-                        bridge_child_edge = self.dot_ctxt.new_edge(bridge_name, bridge_child_name, bridge_child_edge_attr)
-                        self.dot_ctxt.dot_graph.add_edge(bridge_child_edge)
+                        bridge_edge_attr = [("operand", "any1input")]
+                        bridge_edge = self.dot_ctxt.new_edge(bridge_base_name, bridge_name, bridge_edge_attr)
+                        self.dot_ctxt.dot_graph.add_edge(bridge_edge)
                     # Epilogue
-                    bridge_name = f'extd_{src_name}_{cid}_0'
-                    bridge_parent_edge_attr = bridge_attr
-                    bridge_parent_edge = self.dot_ctxt.new_edge(src_name, bridge_name, bridge_parent_edge_attr)
-                    self.dot_ctxt.dot_graph.add_edge(bridge_parent_edge)
+                    bridge_name = f'extd_{src_name}_{cid}_{max_bridges-1}'
+                    bridge_edge_attr = og_edge_attr
+                    bridge_dest_edge = self.dot_ctxt.new_edge(bridge_name, dest_name, bridge_edge_attr)
+                    self.dot_ctxt.dot_graph.add_edge(bridge_dest_edge)
                     # Delete OG edge
                     self.dot_ctxt.dot_graph.del_edge(src_name, dest_name)
         # Update graph
