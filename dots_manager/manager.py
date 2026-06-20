@@ -5,11 +5,28 @@ Abosrbs constants into a vertex's attribute. -> const=x
 All reflexive edges of a vertex are absorbed into its attribute. -> reflexive=true
 Add bridge/routing vertices to maintain bipartite traversal along edges.
 Reduce bridges to minimize routing nodes.
-NOTE: (1) DOT must be a 2-regular graph (i.e., max fan-in/out = 2 for a node)
-      (2) Graph CAN be a cyclic, as we take advantage of GraphViz to
-          establish node ranks. GraphViz takes care of breaking cycles, etc.
-      (3) Unroll capabilites are only for testing purposes. This does not 
+
+WARNING:
+Why the number of blocks matter in a DFG:-
+Consider the case -> n0=rank0, n1=rank1, n3=rank4
+A In a 2 block CGRA, this will require no bridge nodes,
+whereas in a 4 block CGRA, this will require 2 bridge nodes.
+The placer is fast but dumb, it places nodes as they appear in 
+the list. Hence, does not check for legality (distance between child and parent)
+before placing the nodes. A check is possible by using DFS traversal in placer,
+to insert a child-parent distance check (dist==1). But for now simply check using
+the block count parameter (B) attached to the output file.
+
+NOTE: (1) Graph CAN be cyclic, as we take advantage of GraphViz to
+          establish node ranks. GraphViz takes care of breaking cycles.
+      (2) Unroll capabilites are only for testing purposes. This does not 
           modify the constants in the nodes responsible for proper unrolling.
+      (3) Fan-in/out legalization is only for data-paths.
+          Since, there is only on predicate in/out in the CGRA.
+          So ensure predicate fanin/outs are legalized in compiler!
+
+TODO: (1) Annotating edges needs to be part of the compiler,
+          this is not the right place to annotate the edges.
 """
 
 import logging
@@ -93,7 +110,8 @@ class dot_manager:
                 for p in n_parents:
                     p_name = p.get_name()
                     p_opcode = p.get('opcode')
-                    p_const_attr = self.dot_ctxt.get_attribute(p_name, self.const_type)
+                    immediate_en_attr = [('immediate', 'true')]
+                    p_const_attr = self.dot_ctxt.get_attribute(p_name, self.const_type) + immediate_en_attr
                     # Check if parent is a constant and its legal to absorb
                     if (p_opcode == 'const' and n_reflexive is None):
                         # Absorb the parent
@@ -195,12 +213,14 @@ class dot_manager:
                 ie_0_attr = list(in_edge_list[ie_sel].get_attributes().items())
                 ie_1_src = in_edge_list[ie_sel+1].get_source()
                 ie_1_attr = list(in_edge_list[ie_sel+1].get_attributes().items())
+                #self.logger.debug(f'{fn_name} ||| ie_0 = {ie_0_src} -> {new_node_name}, ie_0_attr = {ie_0_attr} | ie_1 = {ie_1_src} -> {new_node_name}, ie_1_attr = {ie_1_attr}')
                 new_ie_0 = self.dot_ctxt.new_edge(ie_0_src, new_node_name, ie_0_attr)
                 new_ie_1 = self.dot_ctxt.new_edge(ie_1_src, new_node_name, ie_1_attr)
                 self.dot_ctxt.dot_graph.del_edge(ie_0_src, dest_name)
                 self.dot_ctxt.dot_graph.del_edge(ie_1_src, dest_name)
                 # Create output edge from new_node towards destination and append this edge to new_edge_list
-                new_edge_attr = ie_0_attr.append(('merge', 'true'))
+                new_edge_attr = ie_0_attr + [('merge', 'true')]
+                self.logger.debug(f'{fn_name} ||| new_edge = {new_node_name} -> {dest_name}, new_edge_attr = {new_edge_attr}')
                 new_edge = self.dot_ctxt.new_edge(new_node_name, dest_name, new_edge_attr)
                 new_in_edge_list.append(new_edge)
                 self.dot_ctxt.dot_graph.add_edge(new_ie_0)
@@ -234,14 +254,16 @@ class dot_manager:
                 oe_0_attr = list(out_edge_list[oe_sel].get_attributes().items())
                 oe_1_dest = out_edge_list[oe_sel+1].get_destination()
                 oe_1_attr = list(out_edge_list[oe_sel+1].get_attributes().items())
+                #self.logger.debug(f'{fn_name} ||| oe_0 = {new_node_name} -> {oe_0_dest}, oe_0_attr = {oe_0_attr} | oe_1 = {new_node_name} -> {oe_1_dest}, oe_1_attr = {oe_1_attr}')
                 new_oe_0 = self.dot_ctxt.new_edge(new_node_name, oe_0_dest, oe_0_attr)
                 new_oe_1 = self.dot_ctxt.new_edge(new_node_name, oe_1_dest, oe_1_attr)
                 self.dot_ctxt.dot_graph.del_edge(src_name, oe_0_dest)
                 self.dot_ctxt.dot_graph.del_edge(src_name, oe_1_dest)
                 # Create output edge from new_node towards destination and append this edge to new_edge_list
-                new_edge_attr = oe_0_attr.append(('split', 'true'))
+                new_edge_attr = oe_0_attr + [('split', 'true')]
                 new_edge = self.dot_ctxt.new_edge(src_name, new_node_name, new_edge_attr)
                 new_out_edge_list.append(new_edge)
+                #self.logger.debug(f'{fn_name} ||| new_edge = {src_name} -> {new_node_name}, new_edge_attr = {new_edge_attr}')
                 # Add new edges to graph
                 self.dot_ctxt.dot_graph.add_edge(new_oe_0)
                 self.dot_ctxt.dot_graph.add_edge(new_oe_1)
@@ -366,10 +388,6 @@ class dot_manager:
                 # If they are on the same block, i.e., set_diff = 0, force them appart by a single block
                 forced_set_diff = 2 if (set_diff == 0) else set_diff
                 max_bridges = forced_set_diff-1
-                # Account for corner case when bridge rank can go negative
-                # In such cases, increment from source_rank instead.
-                bridge_seed_rank = src_rank+1 if (get_bridge_dir(src_rank, dest_rank, blocks) > 0) else get_shadow_rank(src_rank, blocks)+1
-                bridge_attr = [("operand", "any1input")]
                 if (set_diff != 1):
                     # Find edge connecting src and dest
                     og_edge = self.dot_ctxt.get_edge(src_name, dest_name)
@@ -378,7 +396,13 @@ class dot_manager:
                     og_opID = n.get("opID")
                     og_edge_attr = list(og_edge.get_attributes().items())
                     #self.logger.debug(f'{fn_name} ||| og_opID = {og_opID}, og_edge_attributes = {og_edge_attr}')
-                    
+                    bridge_seed_rank = src_rank+1 if (get_bridge_dir(src_rank, dest_rank, blocks) > 0) else get_shadow_rank(src_rank, blocks)+1
+                    bridge_edge_attr = []
+                    if (og_edge.get('data') is not None):
+                        bridge_edge_attr.append(('data', 'true'))
+                    if (og_edge.get('predicate') is not None):
+                        bridge_edge_attr.append(('predicate', 'true'))
+
                     # Split the edge, bridged by a bridge/routing node
                     # Copy parent 'opID' to facilitate node level configuration 
                     # (MUX) post edge placement during mapping
@@ -393,7 +417,6 @@ class dot_manager:
                         bridge_node = self.dot_ctxt.new_node(bridge_name, bridge_node_attr)
                         self.dot_ctxt.dot_graph.add_node(bridge_node)
                         #self.logger.debug(f'{fn_name} ||| Created new bridge | name = {bridge_node.get_name()}, attributes = {list(bridge_node.get_attributes().items())}')
-                        bridge_edge_attr = [("operand", "any1input")]
                         bridge_edge = self.dot_ctxt.new_edge(bridge_base_name, bridge_name, bridge_edge_attr)
                         self.dot_ctxt.dot_graph.add_edge(bridge_edge)
                     # Epilogue
@@ -513,7 +536,7 @@ def _test():
     logger.addHandler(file_handler)
 
     # Print setup
-    dest_dot_unroll_desc = f'u{args.dot_unroll}b{args.dot_unroll_breadth}d{args.dot_unroll_depth}o{args.dot_unroll_offset}'
+    dest_dot_unroll_desc = f'B{args.dot_blocks}_DR{1 if (args.dot_dual_reg) else 0}_u{args.dot_unroll}b{args.dot_unroll_breadth}d{args.dot_unroll_depth}o{args.dot_unroll_offset}_P{1 if (args.dot_predicate_enable) else 0}'
     dest_dot_desc = dest_dot_unroll_desc + 'i' if (args.dot_unroll_incremental) else dest_dot_unroll_desc
     dest_fname = str(args.dot_file).split('/')[-1].replace('.dot', f'_{dest_dot_desc}_output.dot')
     dest_fpath = os.path.join(cwd, 'dots/results', dest_fname)
@@ -544,8 +567,14 @@ def _test():
     dot_man.make_lowerCase()
     # Unroll DFG
     if (dot_man.unroll(args.dot_unroll, args.dot_unroll_breadth, args.dot_unroll_depth, args.dot_unroll_offset, args.dot_unroll_incremental)):
-        # Print Dot file
-        dot_man.write_dot(dest_fpath)
+        logger.info(f'{fn_name} ||| Blocks = {args.dot_blocks} | Total nodes = {len(dot_man.dot_ctxt.dot_nodes)}')
+        in_str = input('Write dot file (y/n): ')
+        if (in_str and in_str.lower()[0] == 'y'):
+            # Print Dot file
+            dot_man.write_dot(dest_fpath)
+            logger.info(f'{fn_name} ||| Dot file write succeeded !')
+        else:
+            logger.info(f'{fn_name} ||| Dot file write failed !')
 
 if __name__ == "__main__":
     _test()

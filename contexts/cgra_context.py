@@ -29,7 +29,7 @@ class cgra_context:
         self.cgra_block_size = None
         self.cgra_size = None
         # Maintain a dict, per block, for each opcode, holding a list of valid PEs that we can map to
-        self.avail_pe = []                      # [(PE_id, PE_type, contexts, linked), ...]
+        self.avail_pe = []                      # [(PE_id, PE_type, contexts, linked), ...]                 # Linked must always be at the end
         # Maintain a list to track the availability of in/out ports in a PE, per block
         # The PE_ID is the location of PE along the list. This is by virtue of CGRA construction.
         # CGRA construction/PE ordering is set in cgra_config.yaml
@@ -140,26 +140,6 @@ class cgra_context:
         # Print state vars
         self.logger.debug(f'{fn_name} ||| avail_pe = {self.avail_pe}')
         self.logger.debug(f'{fn_name} ||| pe_info = {self.pe_info}')
-    
-    def get_relative_rank (self, rank: int) -> int:
-        rel_rank = (self.cgra_phy_blocks-1) - abs(int(rank%self.cgra_blocks)-(self.cgra_phy_blocks-1))
-        return rel_rank
-    
-    def get_mod_rank (self, rank: int) -> int:
-        mod_rank = int(rank%self.cgra_blocks)
-        return mod_rank
-    
-    def get_node_region (self, rank: int) -> int:
-        node_region = 1 if (self.get_mod_rank(rank) < self.cgra_phy_blocks-1) else -1
-        return node_region
-    
-    def get_mod_shadow_rank (self, rank: int) -> int:
-        mod_shadow_rank = 0 if (self.get_mod_rank(rank) == 0) else self.cgra_blocks - self.get_mod_rank(rank)
-        return mod_shadow_rank
-    
-    def get_shadow_rank (self, rank: int) -> int:
-        shadow_rank = rank + (self.get_mod_shadow_rank(rank) - self.get_mod_rank(rank))
-        return shadow_rank
 
 def _test ():
     fn_name = _test.__name__

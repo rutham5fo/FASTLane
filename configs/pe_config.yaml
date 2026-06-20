@@ -5,7 +5,7 @@
 #--------------------- Node Attributes and Common Opcode categories -------------------
 
 Attributes:
-  - {name: 'constVal', translate: 'const'}
+  - {name: 'immediate', translate: 'const'}
   - {name: 'direct_in', translate: 'input'}
   - {name: 'direct_out', translate: 'output'}
   - {name: 'reflexive', translate: 'acc'}
@@ -52,6 +52,7 @@ PE_int:
       - 'div'
       - 'load'
       - 'store'
+      - 'icmp'
     reg:
       - 'const'
       - 'acc'

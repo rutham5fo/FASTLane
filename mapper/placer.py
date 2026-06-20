@@ -54,10 +54,19 @@ class placer:
             ret_val = True
         return ret_val
     
+    def assert_block_supports_opcode (self, node_opcode: str, block_avail_pe: dict) -> bool:
+        fn_name = placer.assert_block_supports_opcode.__name__
+        ret_val = False
+        supported_opcodes = list(block_avail_pe.keys()) + self.cgra_ctxt.pe_cfg['Routing']
+        #self.logger.debug(f'{fn_name} ||| Block supports opcodes = {supported_opcodes}')
+        if (node_opcode in supported_opcodes):
+            ret_val = True
+        return ret_val
+    
     def assert_routing_opcode (self, node_opcode: str) -> bool:
         ret_val = False
         for rop in self.cgra_ctxt.pe_cfg['Routing']:
-            if (node_opcode == rop['name']):
+            if (node_opcode == rop):
                 ret_val = True
                 break
         return ret_val
@@ -91,60 +100,127 @@ class placer:
         fout_edges = [[e for e in edges if (e.get_source() == node_name and e.get_destination() == c.get_name())][0] for c in children]
         return (fin_edges, fout_edges)
     
-    def update_pe_routing_resource (self, block, trt_pe_ID: int, trt_pe_routing_cost: list, blk_pe_info: list) -> None:
+    def update_pe_routing_resource (self, block, shadow_block, trt_pe_ID: int, trt_pe_routing_cost: list, trt_shadow_pe_routing_cost: list, blk_pe_info: list, shadow_blk_pe_info: list) -> None:
         fn_name = placer.update_pe_routing_resource.__name__
-        self.logger.debug(f'{fn_name} ||| blk_pe_info[{block}] before mutation: {blk_pe_info}')
+        self.logger.debug(f'{fn_name} ||| PE routing_cost = {trt_pe_routing_cost} | blk_pe_info[{block}] before mutation: {blk_pe_info}')
+        self.logger.debug(f'{fn_name} ||| shadow_PE routing_cost = {trt_shadow_pe_routing_cost} | shadow_blk_pe_info[{shadow_block}] before mutation: {shadow_blk_pe_info}')
         # Reflect the target_opcode_cost in blk_pe_info
         blk_pe_info[trt_pe_ID][1][0][0] -= trt_pe_routing_cost[0][0]
         blk_pe_info[trt_pe_ID][1][0][1] -= trt_pe_routing_cost[0][1]
         blk_pe_info[trt_pe_ID][1][1][0] -= trt_pe_routing_cost[1][0]
         blk_pe_info[trt_pe_ID][1][1][1] -= trt_pe_routing_cost[1][1]
+        # Reflect the target_opcode_cost in shadow_blk_pe_info
+        shadow_blk_pe_info[trt_pe_ID][1][0][0] -= trt_shadow_pe_routing_cost[0][0]
+        shadow_blk_pe_info[trt_pe_ID][1][0][1] -= trt_shadow_pe_routing_cost[0][1]
+        shadow_blk_pe_info[trt_pe_ID][1][1][0] -= trt_shadow_pe_routing_cost[1][0]
+        shadow_blk_pe_info[trt_pe_ID][1][1][1] -= trt_shadow_pe_routing_cost[1][1]
         self.logger.debug(f'{fn_name} ||| blk_pe_info[{block}] after mutation: {blk_pe_info}')
+        self.logger.debug(f'{fn_name} ||| shadow_blk_pe_info[{shadow_block}] after mutation: {shadow_blk_pe_info}')
 
-    def is_pe_routable (self, block, target_pe_ID: int, in_edges: list, out_edges: list, blk_pe_info: list) -> tuple[int|None, list[list[int, int]]]:
+    def is_pe_routable (self, node_name, block, target_pe_ID: int, in_edges: list, out_edges: list, parents: list, children: list, blk_pe_info: list, shadow_blk_pe_info: list) -> tuple[int|None, list[list[int, int]], list[list[int, int]]]:
         fn_name = placer.is_pe_routable.__name__
         trt_pe_ID = None
         trt_pe_routing_cost = None
+        trt_shadow_pe_routing_cost = None
         t_pe_routing_cost = [[0, 0], [0, 0]]                # [[data_in, data_out], [pred_in, pred_out]]
+        t_shadow_pe_routing_cost = [[0, 0], [0, 0]]
         # Find if the target PE satisfies the in/out routing conditions from pe_info
         trt_pe_routing_resources = blk_pe_info[target_pe_ID][1]
+        trt_shadow_pe_routing_resources = shadow_blk_pe_info[target_pe_ID][1]
+        # Sanity check
+        len_ie = len(in_edges)
+        len_oe = len(out_edges)
+        len_p = len(parents)
+        len_c = len(children)
+        if (len_ie != len_p or len_oe != len_c):
+            self.logger.error(f'{fn_name} ||| Disparity between number of edges and parents/children !')
+            return (trt_pe_ID, trt_pe_routing_cost, trt_shadow_pe_routing_cost)
         # Find input cost
-        for ie in in_edges:
-            if (ie.get('data') is not None):
-                t_pe_routing_cost[0][0] += 1
-            if (ie.get('predicate') is not None):
-                t_pe_routing_cost[1][0] += 1
+        for i in range(len_ie):
+            # We assume the ordering of edges corresponds to its respective block in the blocks list.
+            ie = in_edges[i]
+            # Sanity check to make sure DFG edge has guide attributes
+            if (ie.get('data') is None and ie.get('predicate') is None):
+                err_msg = f'{fn_name} ||| DFG node[{node_name}] has neither data nor predicate guide attributes on its input edge'
+                self.logger.error(err_msg)
+                raise ValueError(err_msg)
+            # For input edges, we look from the perspective of parent nodes
+            p_blk = int(parents[i].get('rank')) % self.cgra_ctxt.cgra_blocks
+            is_forward_edge = self.mapper_ctxt.assert_forward_edge(p_blk, block)
+            p_region = self.mapper_ctxt.get_node_region(p_blk)
+            n_region = self.mapper_ctxt.get_node_region(block)
+            # A forward edge will travel through same region as parent_block,
+            # and vice-versa for a reverse edge.
+            # Case 1: its a forward edge and target block and parent block are in the same region
+            # Case 4: backward edge, target block and parent block are in opposite regions
+            if ((is_forward_edge and p_region == n_region) or (not is_forward_edge and p_region != n_region)):
+                if (ie.get('data') is not None):
+                    t_pe_routing_cost[0][0] += 1
+                if (ie.get('predicate') is not None):
+                    t_pe_routing_cost[1][0] += 1
+            # Case 2: forward edge, target block and parent block are in opposite regions
+            # Case 3: backward edge, target block and parent block are in same region
+            elif ((is_forward_edge and p_region != n_region) or (not is_forward_edge and p_region == n_region)):
+                if (ie.get('data') is not None):
+                    t_shadow_pe_routing_cost[0][0] += 1
+                if (ie.get('predicate') is not None):
+                    t_shadow_pe_routing_cost[1][0] += 1
+            else:
+                err_msg = f'{fn_name} ||| Something went wrong ! | is_forward_edge = {is_forward_edge}, n_region = {n_region}, p_region = {p_region}'
+                self.logger.error(err_msg)
+                raise ValueError(err_msg)
         # Find output cost
-        for oe in out_edges:
-            if (oe.get('data') is not None):
-                t_pe_routing_cost[0][1] += 1
-            if (oe.get('predicate') is not None):
-                t_pe_routing_cost[1][1] += 1
+        for i in range(len_oe):
+            oe = out_edges[i]
+            # Sanity check to make sure DFG edge has guide attributes
+            if (oe.get('data') is None and oe.get('predicate') is None):
+                err_msg = f'{fn_name} ||| DFG node[{node_name}] has neither data nor predicate guide attributes on its output edge'
+                self.logger.error(err_msg)
+                raise ValueError(err_msg)
+            # For output edges, we look from the perspective of target node
+            # Hence there are only 2 cases, both dependent on the edge direction
+            c_blk = int(children[i].get('rank')) % self.cgra_ctxt.cgra_blocks
+            is_forward_edge = self.mapper_ctxt.assert_forward_edge(block, c_blk)
+            if (is_forward_edge):
+                if (oe.get('data') is not None):
+                    t_pe_routing_cost[0][1] += 1
+                if (oe.get('predicate') is not None):
+                    t_pe_routing_cost[1][1] += 1
+            else:
+                if (oe.get('data') is not None):
+                    t_shadow_pe_routing_cost[0][1] += 1
+                if (oe.get('predicate') is not None):
+                    t_shadow_pe_routing_cost[1][1] += 1
+        self.logger.debug(f'{fn_name} ||| required_routing_cost = {t_pe_routing_cost} | required_shadow_routing_cost = {t_shadow_pe_routing_cost}')
         # Check if routable
         if (trt_pe_routing_resources[0][0] >= t_pe_routing_cost[0][0] and trt_pe_routing_resources[0][1] >= t_pe_routing_cost[0][1] \
-            and trt_pe_routing_resources[1][0] >= t_pe_routing_cost[1][0] and trt_pe_routing_resources[1][1] >= t_pe_routing_cost[1][1]):
+            and trt_pe_routing_resources[1][0] >= t_pe_routing_cost[1][0] and trt_pe_routing_resources[1][1] >= t_pe_routing_cost[1][1] \
+            and trt_shadow_pe_routing_resources[0][0] >= t_shadow_pe_routing_cost[0][0] and trt_shadow_pe_routing_resources[0][1] >= t_shadow_pe_routing_cost[0][1] \
+            and trt_shadow_pe_routing_resources[1][0] >= t_shadow_pe_routing_cost[1][0] and trt_shadow_pe_routing_resources[1][1] >= t_shadow_pe_routing_cost[1][1]):
             trt_pe_routing_cost = t_pe_routing_cost
+            trt_shadow_pe_routing_cost = t_shadow_pe_routing_cost
             trt_pe_ID = target_pe_ID
         else:
-            self.logger.debug(f'{fn_name} ||| Target PE[{target_pe_ID}] in block[{block}] lacks routing resources | Required cost = {t_pe_routing_cost}; Available = {trt_pe_routing_resources}')
-        return (trt_pe_ID, trt_pe_routing_cost)
+            self.logger.debug(f'{fn_name} ||| Target PE[{target_pe_ID}] in block[{block}] lacks routing resources \n Required PE cost = {t_pe_routing_cost}, shadow PE cost = {t_shadow_pe_routing_cost}; Available PE resources = {trt_pe_routing_resources}, shadow PE resources = {trt_shadow_pe_routing_resources}')
+        return (trt_pe_ID, trt_pe_routing_cost, trt_shadow_pe_routing_cost)
     
     def remove_target_pe (self, block, trt_pe_ID: int, trt_pe_type: str, trt_pe_opGroup: str, blk_avail_pe: dict, shadow_blk_avail_pe: dict) -> None:
         fn_name = placer.remove_target_pe.__name__
+        #self.logger.debug(f'{fn_name} ||| trt_pe_ID = {trt_pe_ID}, trt_pe_type = {trt_pe_type}, trt_pe_opGroup = {trt_pe_opGroup}')
         self.logger.debug(f'{fn_name} ||| blk_avail_pe[{block}] before mutation: {blk_avail_pe}')
-        # Remove PEs from all opGroups using target_pe_ID/opGroup in blk_avail_pe
-        #self.logger.debug(f'{fn_name} ||| New blk_pe_info after mutation @ [{trt_pe_ID}]: {blk_pe_info}')
+        # Remove PEs from all opGroups using target_pe_ID/pe_type in blk_avail_pe
         # Get opGroup Keys to search for in blk_avail_pe
         op_keys = self.cgra_ctxt.pe_cfg[trt_pe_type]['opGroup'][trt_pe_opGroup]
-        #self.logger.debug(f'{fn_name} ||| target_pe_type = {trt_pe_type}')
         #self.logger.debug(f'{fn_name} ||| Searching blk_avail_pe for keys = {op_keys}')
         # Remove target from blk_avail_pe
         for k in op_keys:
             for i, pd in enumerate(blk_avail_pe[k]):
-                if (pd[0] == trt_pe_ID and pd[1] == trt_pe_opGroup):
-                    linked = pd[2]
+                #self.logger.debug(f'{fn_name} ||| {k}[{i}] = {pd}')
+                if (pd[0] == trt_pe_ID and pd[1] == trt_pe_type):
+                    linked = pd[-1]
                     if (linked == 1):
                         del shadow_blk_avail_pe[k][i]
+                    #self.logger.debug(f'{fn_name} ||| Removing PE[{trt_pe_ID}] from op[{k}]')
                     del blk_avail_pe[k][i]
         self.logger.debug(f'{fn_name} ||| blk_avail_pe[{block}] after mutation: {blk_avail_pe}')
 
@@ -155,6 +231,7 @@ class placer:
         trt_pe_opGroup = None
         trt_pe_context = None
         trt_pe_routing_cost = None
+        trt_shadow_pe_routing_cost = None
         # Get node's name, opID, opcode, rank and compute cgra_block
         n_name = node.get_name()
         n_attr = node.get_attributes()
@@ -166,66 +243,78 @@ class placer:
         blk_avail_pe = avail_pe[n_blk]
         blk_pe_info = pe_info[n_blk]
         shadow_blk_avail_pe = avail_pe[n_shadow_blk]
+        shadow_blk_pe_info = pe_info[n_shadow_blk]
         # Get node attributes to search for
         search_attr = self.cgra_ctxt.pe_cfg['Attributes']
-        # First find how many input and output data-edges the node utilizes
+        # First find how many input and output data-edges the node utilizes.
         fin_edges, fout_edges = self.get_op_edges(n_name, parents, children, edges)
-        # Check if opcode is of routing type
-        routing = self.assert_routing_opcode(n_opcode)
-        # Get corresponding list of candidate PEs from avail_pe
-        cand_pe_list = blk_pe_info if (routing) else avail_pe[n_opcode]
-        # List to keep track of used opGroups
-        used_opGroups = []
-        if (len(cand_pe_list) == 0):
-            self.logger.error(f'{fn_name} ||| No candidate PE available to map opcode[{n_opcode}] from node[{n_name}]')
-        else:
-            for cpid, cand_pe in enumerate(cand_pe_list):
-                lp_abort = False
-                cand_pe_id = cpid if (routing) else cand_pe[0]
-                cand_pe_type = None if (routing) else cand_pe[1]
-                cand_pe_context = None if (routing) else cand_pe[2]
-                cand_pe_routing_cost = None
-                # Check if candidate PE supports the target opcode
-                #if (self.is_opcode_supported(n_opcode, cand_pe_type, cand_pe_opGroup) and t_opType != 'route'):
-                cand_pe_opGroup = self.get_opGroup(n_opcode, cand_pe_type)
-                if (cand_pe_opGroup is not None):
-                    used_opGroups.append(cand_pe_opGroup)
-                    # Find if candidate PE can accomodate supplimentary node attributes
-                    for attr in search_attr:
-                        # Check if the attribute we are searching for exists in node
-                        if (attr['name'] in list(n_attr.keys())):
-                            # Get related opcode from node attribute description
-                            t_opcode = attr['translate']
-                            # Check if supplimentary opcode falls within same opGroup in candidate PE
-                            t_opGroup = self.get_opGroup(t_opcode, cand_pe_type)
-                            if (t_opGroup == cand_pe_opGroup or t_opGroup is None):
-                                self.logger.error(f'{fn_name} ||| Cannot map two opcodes[{n_opcode}, {t_opcode}] into the same opGroup[{t_opGroup}] of the same candidate[{cand_pe_id}]')
-                                used_opGroups = None
-                                lp_abort = True
-                                break
-                            used_opGroups.append(t_opGroup)
-                if (lp_abort):
+        # Check if opcode is supported
+        if (self.assert_block_supports_opcode(n_opcode, blk_avail_pe)):
+            # Check if opcode is of routing type
+            routing = self.assert_routing_opcode(n_opcode)
+            # Get corresponding list of candidate PEs from avail_pe
+            cand_pe_list = blk_pe_info if (routing) else blk_avail_pe[n_opcode]
+            if (len(cand_pe_list) == 0):
+                self.logger.error(f'{fn_name} ||| No candidate PE available to map opcode[{n_opcode}] from node[{n_name}]')
+            else:
+                for cpid, cand_pe in enumerate(cand_pe_list):
+                    # List to keep track of used opGroups
+                    used_opGroups = []
+                    lp_abort = False
+                    cand_pe_id = cpid if (routing) else cand_pe[0]
+                    cand_pe_type = None if (routing) else cand_pe[1]
+                    cand_pe_context = None if (routing) else cand_pe[2]
+                    cand_pe_routing_cost = None
+                    cand_shadow_pe_routing_cost = None
+                    # Check if candidate PE supports the target opcode
+                    cand_pe_opGroup = self.get_opGroup(n_opcode, cand_pe_type)
+                    if (cand_pe_opGroup is not None):
+                        used_opGroups.append(cand_pe_opGroup)
+                        # Find if candidate PE can accomodate supplimentary node attributes
+                        for attr in search_attr:
+                            # Check if the attribute we are searching for exists in node
+                            if (attr['name'] in list(n_attr.keys())):
+                                # Get related opcode from node attribute description
+                                t_opcode = attr['translate']
+                                # Check if supplimentary opcode falls within same opGroup in candidate PE
+                                t_opGroup = self.get_opGroup(t_opcode, cand_pe_type)
+                                self.logger.debug(f'{fn_name} ||| attr[{attr['name']}] = opcode[{t_opcode}] | t_opGroup = {t_opGroup}; used_opGroups = {used_opGroups}')
+                                if (t_opGroup in used_opGroups or t_opGroup is None):
+                                    self.logger.error(f'{fn_name} ||| Cannot map two opcodes into the same opGroup[{t_opGroup}] of candidate[{cand_pe_id}]')
+                                    used_opGroups = None
+                                    lp_abort = True
+                                    break
+                                self.logger.debug(f'{fn_name} ||| node[{n_name}] -> attr[{attr['name']}] = opcode[{t_opcode}]; Satisfied')
+                                used_opGroups.append(t_opGroup)
+                    if (lp_abort):
+                        break
+                    # Check if there is sufficient in/out data_paths from target_PE
+                    # An edge need not always consume resources from the target-node's block,
+                    # depending on the rank of parent/child, an edge may consume from 
+                    # the target-node's current or shadow-block.
+                    cand_pe_id, cand_pe_routing_cost, cand_shadow_pe_routing_cost = self.is_pe_routable(n_name, n_blk, cand_pe_id, fin_edges, fout_edges, parents, children, blk_pe_info, shadow_blk_pe_info)
+                    if (cand_pe_id is None):
+                        continue
+                    trt_pe_ID = cand_pe_id
+                    trt_pe_type = cand_pe_type
+                    trt_pe_opGroup = used_opGroups
+                    trt_pe_context = cand_pe_context
+                    trt_pe_routing_cost = cand_pe_routing_cost
+                    trt_shadow_pe_routing_cost = cand_shadow_pe_routing_cost
+                    self.logger.debug(f'{fn_name} ||| Found candidate PE[{cand_pe_id}] in block[{n_blk}], that supports opcode[{n_opcode}] from node[{n_name}] | target_pe_id = {trt_pe_ID} | PE routing_cost = {trt_pe_routing_cost}, shadow_PE routing_cost = {trt_shadow_pe_routing_cost}')
                     break
-                # Check if there is sufficient in/out data_paths from target_PE
-                cand_pe_id, cand_pe_routing_cost = self.is_pe_routable(n_blk, cand_pe_id, fin_edges, fout_edges, blk_pe_info)
-                if (cand_pe_id is None):
-                    continue
-                self.logger.debug(f'{fn_name} ||| Found candidate PE[{cand_pe_id}], that supports opcode[{n_opcode}] from node[{n_name}] | target_pe_id = {trt_pe_ID}')
-                trt_pe_ID = cand_pe_id
-                trt_pe_type = cand_pe_type
-                trt_pe_opGroup = used_opGroups
-                trt_pe_context = cand_pe_context
-                trt_pe_routing_cost = cand_pe_routing_cost
-                break
-        if (trt_pe_ID is not None):
-            if (trt_pe_opGroup is not None):
-                for opG in trt_pe_opGroup:
-                    # If a valid candidate is available, remove it from avail_pe list
-                    self.remove_target_pe(n_blk, trt_pe_ID, trt_pe_type, opG, blk_avail_pe, shadow_blk_avail_pe)
-            # Update PE routing resources
-            self.update_pe_routing_resource(n_blk, trt_pe_ID, trt_pe_routing_cost, blk_pe_info)
+            if (trt_pe_ID is not None):
+                if (trt_pe_opGroup is not None):
+                    self.logger.debug(f'{fn_name} ||| target_pe_opGroup list = {trt_pe_opGroup}')
+                    for opG in trt_pe_opGroup:
+                        # If a valid candidate is available, remove it from avail_pe list
+                        self.remove_target_pe(n_blk, trt_pe_ID, trt_pe_type, opG, blk_avail_pe, shadow_blk_avail_pe)
+                # Update PE routing resources
+                self.update_pe_routing_resource(n_blk, n_shadow_blk, trt_pe_ID, trt_pe_routing_cost, trt_shadow_pe_routing_cost, blk_pe_info, shadow_blk_pe_info)
+            else:
+                self.logger.error(f'{fn_name} ||| Failed to place node[{n_name}] with opcode[{n_opcode}] as suitable candidate not found')
         else:
-            self.logger.error(f'{fn_name} ||| Failed to place node[{n_name}] with opcode[{n_opcode}] as suitable candidate not found')
+            self.logger.error(f'{fn_name} ||| Opcode[{n_opcode}] not supported by block[{n_blk}]')
         return (trt_pe_ID, trt_pe_context)
     
     # Run placer on given dot file according to cgra_context built from config files
@@ -247,6 +336,7 @@ class placer:
             n_parents = dot_ctxt.get_parents(n.get_name())
             n_opcode = n.get('opcode')
             n_opID = n.get('opID')
+            p_opID = [p.get('opID') for p in n_parents]
             n_rank = int(n.get('rank'))
             # The virtual blocks (cgra_ctxt.cgra_blocks) cover the whole triangle wave.
             # Hence its ok to get a nodes block using rank and virtual blocks.
@@ -256,14 +346,14 @@ class placer:
             # Get candidate PE
             target_pe_ID, _ = self.find_candidate_pe(n, n_parents, n_children, dedges, avail_pe, pe_info)
             if (target_pe_ID is None):
-                self.logger.error(f'{fn_name} ||| No target PE found for PE_opcode[{n_opcode}] of node[{n_name}], due to lack of PE ports !')
+                self.logger.error(f'{fn_name} ||| No target PE found for PE_opcode[{n_opcode}] of node[{n_name}] !')
                 break
             # Place node in target PE by creating an entry in mapper_context's pe_meta
             # NOTE: Mapper context stores all relevant data using global_peID
             global_target_pe_ID = self.mapper_ctxt.get_globalPE_id(target_pe_ID, n_blk)
             self.mapper_ctxt.add_node2pe(n_name, global_target_pe_ID)
-            self.mapper_ctxt.add_pe_meta_opcode(global_target_pe_ID, n_opcode, n_opID)
-            self.logger.debug(f'{fn_name} ||| Successfully placed node[{n_name}], opID[{n_opID}], opcode[{n_opcode}] @ target PE[{global_target_pe_ID}]')
+            self.mapper_ctxt.add_pe_meta_opcode(global_target_pe_ID, n_opcode, n_opID, p_opID)
+            self.logger.debug(f'{fn_name} ||| Successfully placed node[{n_name}], opID[{n_opID}], opcode[{n_opcode}] @ target PE[{global_target_pe_ID}] in block[{n_blk}]')
             # Update tracker
             nodes_placed += 1
         placed = True if (nodes_placed == total_nodes) else False

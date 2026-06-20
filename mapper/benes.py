@@ -97,13 +97,14 @@ class benes:
         # Get free destinations while arranging existing pairs
         for pair in perm:
             b_perm[pair[0]] = pair[1]
+            self.logger.debug(f'{fn_name} ||| pair = {pair}')
             f_dest.remove(pair[1])
         if (len(f_dest) > 0):
             self.logger.debug(f'{fn_name} ||| almost-balanced_perm = {b_perm}; free_dest = {f_dest}')
         # Populate balanced permutation
         for elem in range(self.benes_size):
             if (b_perm[elem] is None):
-                b_perm[elem] = f_dest.pop()
+                b_perm[elem] = f_dest.pop(0)
         self.logger.debug(f'{fn_name} ||| balanced_perm = {b_perm}')
         return b_perm
     

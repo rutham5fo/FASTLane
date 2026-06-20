@@ -62,23 +62,27 @@ class mapper:
         return logger
     
     # Run placer on given dot file according to cgra_context built from config files
-    def run (self, dot_ctxt: dot_context=None) -> bool:
+    def run (self, dot_ctxt: dot_context=None, dot_blocks: int=-1) -> bool:
         fn_name = placer.run.__name__
         mapped = False
-        # Set start time
-        _mpr_start = time.perf_counter_ns()
-        # Run placer
-        if (self.plcr.run(dot_ctxt, self.mapper_ctxt)):
-            # Run router
-            mapped = self.rtr.run(dot_ctxt, self.mapper_ctxt)
-            self.mapper_ctxt.print_data()
-        # Measure run_time
-        _mpr_end = time.perf_counter_ns()
-        if (mapped):
-            self.logger.info(f'{fn_name} ||| Mapping: SUCCESS')
+        # Sanity check
+        if (dot_blocks < 0 or dot_blocks != self.cgra_ctxt.cgra_phy_blocks):
+            self.logger.error(f'{fn_name} ||| DFG blocks[{dot_blocks}] and CGRA blocks[{self.cgra_ctxt.cgra_phy_blocks}] dont match !')
         else:
-            self.logger.error(f'{fn_name} ||| Mapping: FAILED')
-        self.logger.info(f'{fn_name} ||| Mapper Run-time (s) = {(_mpr_end-_mpr_start)/1000000000}')
+            # Set start time
+            _mpr_start = time.perf_counter_ns()
+            # Run placer
+            if (self.plcr.run(dot_ctxt)):
+                # Run router
+                mapped = self.rtr.run(dot_ctxt)
+                self.mapper_ctxt.print_data()
+            # Measure run_time
+            _mpr_end = time.perf_counter_ns()
+            if (mapped):
+                self.logger.info(f'{fn_name} ||| Mapping: SUCCESS')
+            else:
+                self.logger.error(f'{fn_name} ||| Mapping: FAILED')
+            self.logger.info(f'{fn_name} ||| Mapper Run-time (s) = {(_mpr_end-_mpr_start)/1000000000}')
         return mapped
 
 def _test ():
@@ -97,11 +101,12 @@ def _test ():
     # Get dot_context
     dot_ctxt = dot_context(log_level=logging.DEBUG)
     dot_ctxt.get_graph(dot_fpath)
+    dot_blocks = int(dot_fpath[dot_fpath.rfind('_B')+2])
 
     # Create Mapper
     mpr = mapper(cgra_cfg_fpath, pe_cfg_fpath, 'CGRA', log_level=logging.DEBUG)
     
-    mpr.run(dot_ctxt)
+    mpr.run(dot_ctxt, dot_blocks)
 
 if __name__ == "__main__":
     _test()
