@@ -352,7 +352,7 @@ class placer:
             # NOTE: Mapper context stores all relevant data using global_peID
             global_target_pe_ID = self.mapper_ctxt.get_globalPE_id(target_pe_ID, n_blk)
             self.mapper_ctxt.add_node2pe(n_name, global_target_pe_ID)
-            self.mapper_ctxt.add_pe_meta_opcode(global_target_pe_ID, n_opcode, n_opID, p_opID)
+            self.mapper_ctxt.add_pe_meta_opcode(global_target_pe_ID, n_name, n_opcode, n_opID, p_opID)
             self.logger.debug(f'{fn_name} ||| Successfully placed node[{n_name}], opID[{n_opID}], opcode[{n_opcode}] @ target PE[{global_target_pe_ID}] in block[{n_blk}]')
             # Update tracker
             nodes_placed += 1

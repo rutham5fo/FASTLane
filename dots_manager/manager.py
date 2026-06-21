@@ -34,6 +34,7 @@ import os
 import argparse
 import subprocess
 from contexts.dot_context import dot_context
+from contexts.cgra_context import cgra_context
 
 class dot_manager:
 
@@ -345,6 +346,8 @@ class dot_manager:
             for tn in t_dctxt.dot_nodes:
                 if (n.get_name() == tn.get_name()):
                     n.set("rank", tn.get("rank"))
+        # Update graph
+        self.dot_ctxt.update(fn_name)
     
     # Make graph bipartite
     def make_bipartite (self, blocks: int=2):
@@ -377,12 +380,12 @@ class dot_manager:
             src_rank = int(n.get("rank"))
             rel_src_rank = get_rel_rank(src_rank, blocks)
             children = self.dot_ctxt.get_children(src_name)
-            #self.logger.debug(f'{fn_name} ||| Children = {children}')
+            self.logger.debug(f'{fn_name} ||| Children = {children}')
             for cid, dest in enumerate(children):
                 dest_name = dest.get_name()
                 dest_rank = int(dest.get("rank"))
                 rel_dest_rank = get_rel_rank(dest_rank, blocks)
-                #self.logger.debug(f'{fn_name} ||| src ({src_name}) rank = {src_rank}, rel_src_rank = {rel_src_rank}; dest ({dest_name}) rank = {dest_rank}, rel_dest_rank = {rel_dest_rank}')
+                self.logger.debug(f'{fn_name} ||| src ({src_name}) rank = {src_rank}, rel_src_rank = {rel_src_rank}; dest ({dest_name}) rank = {dest_rank}, rel_dest_rank = {rel_dest_rank}')
                 # Check if both nodes are not adjacent
                 set_diff = abs(rel_dest_rank-rel_src_rank)
                 # If they are on the same block, i.e., set_diff = 0, force them appart by a single block
@@ -395,7 +398,7 @@ class dot_manager:
                     # Get attributes of edge connecting src and dest and the parent opID
                     og_opID = n.get("opID")
                     og_edge_attr = list(og_edge.get_attributes().items())
-                    #self.logger.debug(f'{fn_name} ||| og_opID = {og_opID}, og_edge_attributes = {og_edge_attr}')
+                    self.logger.debug(f'{fn_name} ||| og_opID = {og_opID}, og_edge_attributes = {og_edge_attr}')
                     bridge_seed_rank = src_rank+1 if (get_bridge_dir(src_rank, dest_rank, blocks) > 0) else get_shadow_rank(src_rank, blocks)+1
                     bridge_edge_attr = []
                     if (og_edge.get('data') is not None):
@@ -408,7 +411,7 @@ class dot_manager:
                     # (MUX) post edge placement during mapping
 
                     # Main
-                    #self.logger.debug(f'{fn_name} ||| forced_set_diff = {forced_set_diff}, max_bridges = {max_bridges}')
+                    self.logger.debug(f'{fn_name} ||| forced_set_diff = {forced_set_diff}, max_bridges = {max_bridges}')
                     for b in range(max_bridges):
                         bridge_base_name = src_name if (b == 0) else f'extd_{src_name}_{cid}_{b-1}'
                         bridge_name = f'extd_{src_name}_{cid}_{b}'
@@ -416,7 +419,7 @@ class dot_manager:
                         bridge_node_attr = [("opcode", "bridge"), ("opID", og_opID), ("rank", str(bridge_rank))]
                         bridge_node = self.dot_ctxt.new_node(bridge_name, bridge_node_attr)
                         self.dot_ctxt.dot_graph.add_node(bridge_node)
-                        #self.logger.debug(f'{fn_name} ||| Created new bridge | name = {bridge_node.get_name()}, attributes = {list(bridge_node.get_attributes().items())}')
+                        self.logger.debug(f'{fn_name} ||| Created new bridge | name = {bridge_node.get_name()}, attributes = {list(bridge_node.get_attributes().items())}')
                         bridge_edge = self.dot_ctxt.new_edge(bridge_base_name, bridge_name, bridge_edge_attr)
                         self.dot_ctxt.dot_graph.add_edge(bridge_edge)
                     # Epilogue
@@ -445,10 +448,11 @@ class dot_manager:
             # Get og nodes and edges
             dnodes = self.dot_ctxt.dot_nodes
             dedges = self.dot_ctxt.dot_edges
+            max_rank = self.dot_ctxt.dot_max_rank
             # New nodes and edges
             n_dnodes = []
             n_dedges = []
-            #self.logger.debug(f'{fn_name} ||| Unrolling DFG by {unroll_factor}')
+            self.logger.debug(f'{fn_name} ||| Unrolling DFG by {unroll_factor} | DFG_max_rank = {max_rank}')
             for i in range(breadth):
                 unroll_inc = 0
                 for j in range(depth):
@@ -460,7 +464,7 @@ class dot_manager:
                         if (incremental):
                             t_node_rank = int(t_node_attr['rank']) + unroll_inc + offset
                         else:
-                            t_node_rank = int(t_node_attr['rank']) + self.dot_ctxt.dot_max_rank * j + offset
+                            t_node_rank = int(t_node_attr['rank']) + max_rank * j + offset
                         t_node_attr['rank'] = str(t_node_rank)
                         t_node_attr_list = list(t_node_attr.items())
                         t_node = self.dot_ctxt.new_node(t_node_name, t_node_attr_list)
@@ -499,13 +503,14 @@ class dot_manager:
     def write_dot (self, dest_fname: str=""):
         self.dot_ctxt.dot_graph.write_raw(dest_fname)
 
-def _test():
-    fn_name = _test.__name__
+def main():
+    fn_name = main.__name__
     cwd = os.getcwd()
 
     # CMD parser
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', action='store', default="", dest='dot_file', help='DOT file to parse')
+    parser.add_argument('--auto', action='store_true', dest='dot_auto', help='Automate DFG generation')
     parser.add_argument('--cgra-radix', action='store', type=int, default=None, dest='dot_max_incidence', help='Max incidence of DFG node')
     parser.add_argument('--cgra-blocks', action='store', type=int, default=None, dest='dot_blocks', help='Number of physical blocks in CGRA')
     parser.add_argument('-u', action='store', type=int, default=1, dest='dot_unroll', help='Unroll factor of DFG')
@@ -541,40 +546,66 @@ def _test():
     dest_fname = str(args.dot_file).split('/')[-1].replace('.dot', f'_{dest_dot_desc}_output.dot')
     dest_fpath = os.path.join(cwd, 'dots/results', dest_fname)
 
-    # Dot src path
+    # Paths
     dot_fpath = os.path.join(cwd, 'dots/srcs', args.dot_file)
+    cgra_cfg_fpath = os.path.join(cwd, 'configs', 'cgra_config.yaml')
+    pe_cfg_fpath = os.path.join(cwd, 'configs', 'pe_config.yaml')
+
+    # CGRA context
+    cgra_ctxt = cgra_context(cgra_cfg_fpath, pe_cfg_fpath, 'CGRA')
+
+    # State var setup
+    auto_en = args.dot_auto
+    dual_reg_en = args.dot_dual_reg
+    predicate_en = args.dot_predicate_enable
+    max_incidence = cgra_ctxt.cgra_radix if (auto_en) else args.dot_max_incidence
+    blocks = cgra_ctxt.cgra_phy_blocks if (auto_en) else args.dot_blocks
+
     # Dot Manager
     dot_man = dot_manager(logger_name)
-    dot_man.gen_dot_context(dot_fpath)
-    # Absorb reflexive edges
-    dot_man.absorb_reflexive()
-    # Absorb constants
-    dot_man.absorb_constants(args.dot_dual_reg)
-    # Absorb IO
-    dot_man.absorb_IO()
-    # Annotate edges
-    dot_man.annotate_data_edges(args.dot_predicate_enable)
-    dot_man.annotate_predicate_edges(args.dot_predicate_enable)
-    # Legalize DFG incidence
-    dot_man.legalize_incidence(args.dot_max_incidence)
-    # Assign opID to each node
-    dot_man.assign_opID()
-    # Assign rank to nodes
-    dot_man.assign_rank()
-    # Make the graph bipartite
-    dot_man.make_bipartite(args.dot_blocks)
-    # Make all opcodes lowercase
-    dot_man.make_lowerCase()
-    # Unroll DFG
-    if (dot_man.unroll(args.dot_unroll, args.dot_unroll_breadth, args.dot_unroll_depth, args.dot_unroll_offset, args.dot_unroll_incremental)):
-        logger.info(f'{fn_name} ||| Blocks = {args.dot_blocks} | Total nodes = {len(dot_man.dot_ctxt.dot_nodes)}')
-        in_str = input('Write dot file (y/n): ')
-        if (in_str and in_str.lower()[0] == 'y'):
+
+    # DFG gen
+    while (True):
+        dot_man.gen_dot_context(dot_fpath)
+        # Absorb reflexive edges
+        dot_man.absorb_reflexive()
+        # Absorb constants
+        dot_man.absorb_constants(dual_reg_en)
+        # Absorb IO
+        dot_man.absorb_IO()
+        # Annotate edges
+        dot_man.annotate_data_edges(predicate_en)
+        dot_man.annotate_predicate_edges(predicate_en)
+        # Legalize DFG incidence
+        dot_man.legalize_incidence(max_incidence)
+        # Assign rank to nodes
+        dot_man.assign_rank()
+        # Unroll DFG
+        if (dot_man.unroll(args.dot_unroll, args.dot_unroll_breadth, args.dot_unroll_depth, args.dot_unroll_offset, args.dot_unroll_incremental)):
+            # Assign opID to each node
+            dot_man.assign_opID()
+            # Make the graph bipartite
+            dot_man.make_bipartite(blocks)
+            # Make all opcodes lowercase
+            dot_man.make_lowerCase()
+            # Validate
+            total_nodes = len(dot_man.dot_ctxt.dot_nodes)
+            logger.info(f'{fn_name} ||| Blocks = {blocks} | Total nodes = {total_nodes}')
+            if (auto_en):
+                est_cgra_size = blocks * cgra_ctxt.cgra_block_size
+                if (total_nodes > est_cgra_size):
+                    blocks += 1
+                    logger.info(f'{fn_name} ||| Generated DFG nodes exceeds estimated CGRA size, re-run with blocks = {blocks}')
+                    continue
+            else:
+                in_str = input('Write dot file (y/n): ')
+                if (in_str and in_str.lower()[0] == 'n'):
+                    logger.info(f'{fn_name} ||| Dot file write failed !')
+                    break
             # Print Dot file
             dot_man.write_dot(dest_fpath)
             logger.info(f'{fn_name} ||| Dot file write succeeded !')
-        else:
-            logger.info(f'{fn_name} ||| Dot file write failed !')
+            break
 
 if __name__ == "__main__":
-    _test()
+    main()

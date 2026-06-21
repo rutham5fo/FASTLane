@@ -59,6 +59,12 @@ class mapper_context:
         self.data_source_tracker = [[[] for _ in range(self.cgra_radix)] for _ in range(self.cgra_blocks)]
         self.pred_path_tracker = [[[] for _ in range(1)] for _ in range(self.cgra_blocks)]
         self.pred_source_tracker = [[[] for _ in range(1)] for _ in range(self.cgra_blocks)]
+    
+    def reset_port_meta (self, gpid) -> None:
+        fn_name = mapper_context.reset_port_meta.__name__
+        for prt in range(self.cgra_radix):
+            self.pe_meta[gpid]['data_port_meta'][prt][1] = []
+        self.pe_meta[gpid]['pred_port_meta'][0][1] = []
 
     def get_globalPE_id (self, pid: int, block: int) -> int:
         fn_name = mapper_context.get_globalPE_id.__name__
@@ -121,7 +127,7 @@ class mapper_context:
     def gen_pe_meta_template (self) -> dict:
         fn_name = mapper_context.gen_pe_meta_template.__name__
         t_pe_meta = {}
-        t_pe_meta['opcode'] = []                                            # Opcodes attached to the PE are added here as a tuple: (opcode_name, opcode_id)
+        t_pe_meta['op'] = []                                            # Opcodes attached to the PE are added here as a tuple: (opcode_name, opcode_id)
                                                                             # The opcode_id attached to the name helps in determining intra-PE routing
         t_pe_meta['data_in_opID'] = [None for _ in range(self.cgra_radix)]       # The in_opID key holds the opIDs attached to the corresponding 
                                                                             # input_paths to PE in ascending order of the input-paths.
@@ -130,8 +136,8 @@ class mapper_context:
         t_pe_meta['pred_out_opID'] = [None for _ in range(1)]
         t_pe_meta['data_out_blockID'] = [None for _ in range(self.cgra_radix)]
         t_pe_meta['pred_out_blockID'] = [None for _ in range(1)]
-        t_pe_meta['data_port_children'] = [(None, None) for _ in range(self.cgra_radix)]    # [(child_node_id, child_PE_id)]
-        t_pe_meta['pred_port_children'] = [(None, None) for _ in range(1)]
+        t_pe_meta['data_port_meta'] = [[None, []] for _ in range(self.cgra_radix)]    # [[child_PE_id, attempted_ports], ...]
+        t_pe_meta['pred_port_meta'] = [[None, []] for _ in range(1)]
         return t_pe_meta
     
     def create_pe_meta (self, global_peID: int) -> None:
@@ -139,14 +145,21 @@ class mapper_context:
         # create PE Metadata using template
         self.pe_meta[global_peID] = self.gen_pe_meta_template()
 
-    def add_pe_meta_opcode (self, global_peID: int=None, opcode: str='', opID: int=None, parent_opID: list[int]=None) -> bool:
+    def add_pe_meta_opcode (self, global_peID: int=None, name: str='', opcode: str='', opID: int=None, parent_opID: list[int]=None) -> bool:
         fn_name = mapper_context.add_pe_meta_opcode.__name__
         ret_val = False
         if (global_peID is not None):
             if (self.pe_meta.get(global_peID, None) is None):
                 self.create_pe_meta(global_peID)
             # Add opcode to pe's Metadata
-            self.pe_meta[global_peID]['opcode'].append((parent_opID, opcode, opID))
+            #self.pe_meta[global_peID]['opcode'].append((parent_opID, opcode, opID))
+            op_dict = {
+                'name'      : name,
+                'code'      : opcode,
+                'in_ID'     : parent_opID,
+                'out_ID'    : opID
+            }
+            self.pe_meta[global_peID]['op'].append(op_dict)
             ret_val = True
         return ret_val
     
@@ -155,8 +168,8 @@ class mapper_context:
         # Create result placeholder
         res_meta = dict(dest_meta)
         # Copy over all meta data from src to dest
-        for opc in src_meta['opcode']:
-            res_meta['opcode'].append(opc)
+        for opc in src_meta['op']:
+            res_meta['op'].append(opc)
         for i_opID, o_opID in list(zip(src_meta['data_in_opID'], src_meta['data_out_opID'])):
             # The combining of paths follows the strict order of
             # physical block's io_opIDs of len(cgra_radix), followed by
@@ -170,10 +183,10 @@ class mapper_context:
             res_meta['data_out_blockID'].append(o_blkID)
         for o_blkID in src_meta['pred_out_blockID']:
             res_meta['pred_out_blockID'].append(o_blkID)
-        for pchild in src_meta['data_port_children']:
-            res_meta['data_port_children'].append(pchild)
-        for pchild in src_meta['pred_port_children']:
-            res_meta['pred_port_children'].append(pchild)
+        for pchild in src_meta['data_port_meta']:
+            res_meta['data_port_meta'].append(pchild)
+        for pchild in src_meta['pred_port_meta']:
+            res_meta['pred_port_meta'].append(pchild)
         return res_meta
 
     def condense_pe_meta (self) -> None:
@@ -258,8 +271,8 @@ class mapper_context:
         self.logger.debug(f'\n')
         self.logger.debug(f'{fn_name} ||| --------------- pe_meta_deets --------------- ')
         for k in list(self.pe_meta.keys()):
-            self.logger.debug(f'{fn_name} ||| pe_meta[{k}]:')
-            self.logger.debug(f'{fn_name} ||| opcode: {self.pe_meta[k]['opcode']}')
+            self.logger.debug(f'{fn_name} ||| PE[{k}] metadata:')
+            self.logger.debug(f'{fn_name} ||| op: {self.pe_meta[k]['op']}')
             self.logger.debug(f'{fn_name} ||| data_in_opID: {self.pe_meta[k]['data_in_opID']}')
             self.logger.debug(f'{fn_name} ||| data_out_opID: {self.pe_meta[k]['data_out_opID']}')
             self.logger.debug(f'{fn_name} ||| pred_in_opID: {self.pe_meta[k]['pred_in_opID']}')

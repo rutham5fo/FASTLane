@@ -1,0 +1,38 @@
+digraph G {
+    coefficients [opcode=input];
+    const1 [opcode=const, constVal="1"];
+    i10_add [opcode=add];
+    i2_add2 [opcode=add];
+    i2_data_size2 [opcode=const, constVal="4"];
+    i2_mul2 [opcode=mul];
+    i3_load [opcode=load, memName=""];
+    i4_add2 [opcode=add];
+    i4_data_size2 [opcode=const, constVal="4"];
+    i4_mul2 [opcode=mul];
+    i5_load [opcode=load, memName=""];
+    i6_mul [opcode=mul];
+    i7_load [opcode=load, memName=""];
+    i8_add [opcode=add];
+    i9_store [opcode=store, memName=""];
+    input [opcode=input];
+    input0 [opcode=input];
+    coefficients -> i4_add2 [operand=any2input];
+    const1 -> i10_add [operand=any2input];
+    i10_add -> i2_mul2 [operand=any2input];
+    i10_add -> i4_mul2 [operand=any2input];
+    i10_add -> i10_add [operand=any2input];
+    i2_add2 -> i3_load [operand=addr];
+    i2_data_size2 -> i2_mul2 [operand=any2input];
+    i2_mul2 -> i2_add2 [operand=any2input];
+    i3_load -> i6_mul [operand=any2input];
+    i4_add2 -> i5_load [operand=addr];
+    i4_data_size2 -> i4_mul2 [operand=any2input];
+    i4_mul2 -> i4_add2 [operand=any2input];
+    i5_load -> i6_mul [operand=any2input];
+    i6_mul -> i8_add [operand=any2input];
+    i7_load -> i8_add [operand=any2input];
+    i8_add -> i9_store [operand=data];
+    input -> i2_add2 [operand=any2input];
+    input0 -> i7_load [operand=addr];
+    input0 -> i9_store [operand=addr];
+}

@@ -66,8 +66,8 @@ class mapper:
         fn_name = placer.run.__name__
         mapped = False
         # Sanity check
-        if (dot_blocks < 0 or dot_blocks != self.cgra_ctxt.cgra_phy_blocks):
-            self.logger.error(f'{fn_name} ||| DFG blocks[{dot_blocks}] and CGRA blocks[{self.cgra_ctxt.cgra_phy_blocks}] dont match !')
+        if (dot_context is None or dot_blocks < 0 or dot_blocks != self.cgra_ctxt.cgra_phy_blocks):
+            self.logger.error(f'{fn_name} ||| DFG blocks[{dot_blocks}] and CGRA blocks[{self.cgra_ctxt.cgra_phy_blocks}] dont match (or) DOT Context unavailable !')
         else:
             # Set start time
             _mpr_start = time.perf_counter_ns()
@@ -84,7 +84,54 @@ class mapper:
                 self.logger.error(f'{fn_name} ||| Mapping: FAILED')
             self.logger.info(f'{fn_name} ||| Mapper Run-time (s) = {(_mpr_end-_mpr_start)/1000000000}')
         return mapped
-
+    
+    def validate (self, dot_ctxt: dot_context=None) -> bool:
+        fn_name = mapper.validate.__name__
+        valid = True
+        dedges = dot_ctxt.dot_edges
+        pe_meta = self.mapper_ctxt.pe_meta
+        for e in dedges:
+            n_src = e.get_source()
+            n_dest = e.get_destination()
+            src_opID = None
+            dest_opID = None
+            self.logger.debug(f'{fn_name} ||| Validating Edge: {n_src} --> {n_dest}')
+            # Find source PE in mapper context
+            for k, meta in list(pe_meta.items()):
+                for data in meta['op']:
+                    if (data['name'] == n_src):
+                        src_opID = data['out_ID']
+                        self.logger.debug(f'{fn_name} ||| Found source @ PE[{k}] | op_name = {data['name']}, opID = {src_opID}')
+                        break
+                if (src_opID is not None):
+                    break
+            if (src_opID is None):
+                self.logger.error(f'{fn_name} ||| Could not find source PE !')
+                valid = False
+                break
+            # Find matching destination PE
+            for k, meta in list(pe_meta.items()):
+                data = meta['data_in_opID']
+                pred = meta['pred_in_opID']
+                if (src_opID in data or src_opID in pred):
+                    for op in meta['op']:
+                        if (src_opID in op['in_ID']):
+                            dest_opID = op['out_ID']
+                            dest_name = op['name']
+                            self.logger.debug(f'{fn_name} ||| Found Destination @ PE[{k}] | op_name = {dest_name}, opID = {dest_opID}')
+                            break
+                if (dest_opID is not None):
+                    break
+            if (dest_opID is None):
+                self.logger.error(f'{fn_name} ||| Could not find destination PE')
+                valid = False
+                break
+        if (not valid):
+            self.logger.info(f'{fn_name} ||| Validation: FAILED')
+        else:
+            self.logger.info(f'{fn_name} ||| Validation: SUCCESS')
+        return valid
+    
 def _test ():
     fn_name = _test.__name__
     cwd = os.getcwd()
@@ -105,8 +152,10 @@ def _test ():
 
     # Create Mapper
     mpr = mapper(cgra_cfg_fpath, pe_cfg_fpath, 'CGRA', log_level=logging.DEBUG)
-    
+    # Run mapper
     mpr.run(dot_ctxt, dot_blocks)
+    # Verify mapping
+    mpr.validate(dot_ctxt)
 
 if __name__ == "__main__":
     _test()

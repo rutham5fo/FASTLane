@@ -88,7 +88,7 @@ class cgra_context:
         self.cgra_blocks = 2*(self.cgra_phy_blocks-1)
         self.cgra_block_size = int(self.cgra_cfg[self.cgra_name]['block_size'])
         self.cgra_size = self.cgra_block_size * self.cgra_blocks if (self.cgra_overload == 1) else self.cgra_block_size* self.cgra_phy_blocks
-        self.logger.info(f'{fn_name} ||| {self.cgra_name}: radix = {self.cgra_radix}, overload = {self.cgra_overload}, phy_blocks = {self.cgra_phy_blocks}, blocks = {self.cgra_blocks}, block_size = {self.cgra_block_size}, total_size = {self.cgra_size}')
+        self.logger.info(f'{fn_name} ||| {self.cgra_name}: radix = {self.cgra_radix}, predicate = {self.cgra_predicate}, overload = {self.cgra_overload}, phy_blocks = {self.cgra_phy_blocks}, blocks = {self.cgra_blocks}, block_size = {self.cgra_block_size}, total_size = {self.cgra_size}')
 
     # Perform CGRA sanity check
     def sanity_check (self) -> bool:
