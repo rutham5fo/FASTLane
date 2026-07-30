@@ -20,19 +20,20 @@ class mapper_context:
         self.cgra_block_size = cgra_block_size
         self.cgra_radix = cgra_radix
         # Mapper uses global_peID for keys (global_peID = cgra_block_size*block_number+local_peID)
-        self.node2pe = {}                                                                           # Populated by placer
-        self.pe_meta = {}                                                                           # Populated by placer
-        self.data_route_pairs = [[[] for _ in range(self.cgra_radix)] for _ in range(self.cgra_blocks)]  # Populated by router | [[[(src_pe, dest_pe)]]]
-        self.pred_route_pairs = [[[] for _ in range(1)] for _ in range(self.cgra_blocks)]
-        self.data_path_scbs = [[None for _ in range(self.cgra_radix)] for _ in range(self.cgra_blocks)]    # Populated by benes
-        self.pred_path_scbs = [[None for _ in range(1)] for _ in range(self.cgra_blocks)]
+        self.node2pe = None                                                                           # Populated by placer
+        self.pe_meta = None                                                                           # Populated by placer
+        self.data_route_pairs = None  # Populated by router | [[[(src_pe, dest_pe)]]]
+        self.pred_route_pairs = None
+        self.data_path_scbs = None    # Populated by benes
+        self.pred_path_scbs = None
         # A path is a Benes connection set from Block A to opposing Block B
         # Each output port from a node sits on a different path.
         # Path_tracker holds the destination PE of an edge, while source_tracker holds the corresponding source
-        self.data_path_tracker = [[[] for _ in range(self.cgra_radix)] for _ in range(self.cgra_blocks)]
-        self.data_source_tracker = [[[] for _ in range(self.cgra_radix)] for _ in range(self.cgra_blocks)]
-        self.pred_path_tracker = [[[] for _ in range(1)] for _ in range(self.cgra_blocks)]
-        self.pred_source_tracker = [[[] for _ in range(1)] for _ in range(self.cgra_blocks)]
+        self.data_path_tracker = None
+        self.data_source_tracker = None
+        self.pred_path_tracker = None
+        self.pred_source_tracker = None
+        self.reset_context()
 
     def log_setup (self, logger_name, log_level, log_dir) -> logging:
         cwd = os.getcwd()
@@ -53,6 +54,19 @@ class mapper_context:
         logger.addHandler(file_handler)
         return logger
     
+    def reset_context (self) -> None:
+        fn_name = mapper_context.reset_context.__name__
+        self.node2pe = {}                                                                           # Populated by placer
+        self.pe_meta = {}                                                                           # Populated by placer
+        self.data_route_pairs = [[[] for _ in range(self.cgra_radix)] for _ in range(self.cgra_blocks)]  # Populated by router | [[[(src_pe, dest_pe)]]]
+        self.pred_route_pairs = [[[] for _ in range(1)] for _ in range(self.cgra_blocks)]
+        self.data_path_scbs = [[None for _ in range(self.cgra_radix)] for _ in range(self.cgra_blocks)]    # Populated by benes
+        self.pred_path_scbs = [[None for _ in range(1)] for _ in range(self.cgra_blocks)]
+        self.data_path_tracker = [[[] for _ in range(self.cgra_radix)] for _ in range(self.cgra_blocks)]
+        self.data_source_tracker = [[[] for _ in range(self.cgra_radix)] for _ in range(self.cgra_blocks)]
+        self.pred_path_tracker = [[[] for _ in range(1)] for _ in range(self.cgra_blocks)]
+        self.pred_source_tracker = [[[] for _ in range(1)] for _ in range(self.cgra_blocks)]
+
     def reset_trackers (self) -> None:
         fn_name = mapper_context.reset_trackers.__name__
         self.data_path_tracker = [[[] for _ in range(self.cgra_radix)] for _ in range(self.cgra_blocks)]
@@ -123,6 +137,21 @@ class mapper_context:
             ret_val = True
         return ret_val
     
+    def del_node2pe (self, node_name: str) -> bool:
+        fn_name = mapper_context.del_node2pe.__name__
+        ret_val = True if (self.node2pe.pop(node_name, None) is not None) else False
+        return ret_val
+    
+    def update_node2pe (self, old_node_name: str, new_node_name: str, new_global_peID: int=None) -> bool:
+        fn_name = mapper_context.update_node2pe.__name__
+        ret_val = False
+        if (self.node2pe.get(old_node_name, None) is not None):
+            ngpid = new_global_peID if (new_global_peID is not None) else self.node2pe[old_node_name]
+            self.add_node2pe(new_node_name, ngpid)
+            self.del_node2pe(old_node_name)
+            ret_val = True
+        return ret_val
+    
     # All about PE meta data template
     def gen_pe_meta_template (self) -> dict:
         fn_name = mapper_context.gen_pe_meta_template.__name__
@@ -144,6 +173,11 @@ class mapper_context:
         fn_name = mapper_context.create_pe_meta.__name__
         # create PE Metadata using template
         self.pe_meta[global_peID] = self.gen_pe_meta_template()
+    
+    def del_pe_meta (self, global_peID: int) -> bool:
+        fn_name = mapper_context.del_pe_meta_opcode.__name__
+        ret_val = True if (self.pe_meta.pop(global_peID, None) is not None) else False
+        return ret_val
 
     def add_pe_meta_opcode (self, global_peID: int=None, name: str='', opcode: str='', opID: int=None, parent_opID: list[int]=None) -> bool:
         fn_name = mapper_context.add_pe_meta_opcode.__name__
@@ -161,6 +195,25 @@ class mapper_context:
             }
             self.pe_meta[global_peID]['op'].append(op_dict)
             ret_val = True
+        return ret_val
+    
+    def update_pe_meta_opcode (self, global_peID: int, old_name: str, new_name: str, new_opcode: str, new_opID: int, new_parent_opID: list[int]) -> bool:
+        fn_name = mapper_context.update_pe_meta.__name__
+        ret_val = False
+        if (self.pe_meta.get(global_peID, None) is not None):
+            new_op_dict = {
+                'name'      : new_name,
+                'code'      : new_opcode,
+                'in_ID'     : new_parent_opID,
+                'out_ID'    : new_opID
+            }
+            try:
+                rep_loc = [loc for loc in range(len(self.pe_meta[global_peID]['op'])) if (self.pe_meta[global_peID]['op'][loc]['name'] == old_name)][0]
+                self.pe_meta[global_peID]['op'][rep_loc] = new_op_dict
+                ret_val = True
+            except Exception as ex:
+                err_msg = f'{fn_name} ||| Invalid old_node_name[{old_name}] for replacement !'
+                self.logger.critical(err_msg)
         return ret_val
     
     def combine_pe_meta (self, dest_meta: dict, src_meta: dict) -> dict:

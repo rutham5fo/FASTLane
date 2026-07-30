@@ -24,9 +24,13 @@ class dot_context:
         self.dot_nodes = []
         self.dot_edges = []
         self.dot_max_rank = None
+        self.dot_max_order = None
+        self.dot_rank_collection = {}
         self.node_meta = {}
+        self.dot_reflect = []
     
     def log_setup (self, logger_name, log_level, log_dir) -> logging:
+        fn_name = dot_context.log_setup.__name__
         cwd = os.getcwd()
         log_fname = logger_name + '.log'
         log_path = os.path.join(cwd, log_dir, log_fname)
@@ -48,8 +52,10 @@ class dot_context:
     def get_node_meta (self) -> None:
         fn_name = dot_context.get_node_meta.__name__
         # Traverse through all nodes and populate node metadata {name:{fanin:int, parents:list, fanout:int, children:list, attributes:list}}
-        max_rank = 0
+        max_rank = 0        # Vertical position of node
+        max_order = 0       # Horizontal position of node
         n_meta = {}
+        n_rank_collection = {}  # {rank: list[nodes]}
         for n in self.dot_nodes:
             # Add node
             n_name = n.get_name()
@@ -61,6 +67,9 @@ class dot_context:
                 n_rank = int(n_rank)
                 if (n_rank > max_rank):
                     max_rank = n_rank
+                if (n_rank_collection.get(n_rank, None) is None):
+                    n_rank_collection[n_rank] = []
+                n_rank_collection[n_rank].append(n)
             fin_cnt = 0
             fout_cnt = 0
             p_names = []
@@ -80,9 +89,21 @@ class dot_context:
             n_meta[n_name]["fanout"] = fout_cnt
             n_meta[n_name]["children"] = c_names
             n_meta[n_name]["attributes"] = list(n.get_attributes().items())
+        for r in n_rank_collection.keys():
+            order = len(n_rank_collection[r])
+            if (order > max_order):
+                max_order = order
         self.dot_max_rank = max_rank
+        self.dot_max_order = max_order
+        self.dot_rank_collection = n_rank_collection
         self.node_meta = n_meta
         #self.logger.debug(f'{fn_name} ||| Node Metadata = {self.node_meta}')
+        # Collection details
+        #ranks = list(self.dot_rank_collection.keys())
+        #ranks.sort()
+        #for r in ranks:
+        #    rnodes = self.dot_rank_collection[r]
+        #    self.logger.debug(f'{fn_name} ||| node collection in rank[{r}] = {[rn.get_name() for rn in rnodes]}')
 
     # Read dot file and get the graph
     def get_graph (self, dot_fpath: str="") -> None:
@@ -99,6 +120,16 @@ class dot_context:
         self.logger.debug(f'{fn_name} ||| Read dot_file \"{dot_fpath}\": \n dot_nodes = {[n.get_name() for n in self.dot_nodes]} \n dot_edges = {[e.get_source() for e in self.dot_edges]}')
         # Get node metadata
         self.get_node_meta()
+
+    # Reflect rank changes in reflect_nodes to actual DFG
+    def reflect_nodes (self) -> None:
+        fn_name = dot_context.reflect_nodes.__name__
+        #self.logger.debug(f'{fn_name} ||| dot_reflect = {[rn.get_name() for rn in self.dot_reflect]}')
+        for rn in self.dot_reflect:
+            rn_name = rn.get_name()
+            n = [dn for dn in self.dot_nodes if (rn_name == dn.get_name())][0]
+            n.set('rank', rn.get('rank'))
+        self.update(fn_name)
 
     # Update context from graph
     def update (self, caller_name: str="") -> None:

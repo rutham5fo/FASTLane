@@ -21,8 +21,9 @@ NOTE: (1) Graph CAN be cyclic, as we take advantage of GraphViz to
           establish node ranks. GraphViz takes care of breaking cycles.
       (2) Unroll capabilites are only for testing purposes. This does not 
           modify the constants in the nodes responsible for proper unrolling.
+          Unrolling must be handled by compiler.
       (3) Fan-in/out legalization is only for data-paths.
-          Since, there is only on predicate in/out in the CGRA.
+          Since, there is only one predicate in/out in the CGRA.
           So ensure predicate fanin/outs are legalized in compiler!
 
 TODO: (1) Annotating edges needs to be part of the compiler,
@@ -38,7 +39,7 @@ from contexts.cgra_context import cgra_context
 
 class dot_manager:
 
-    def __init__ (self, logger_name: str='', log_level: int=logging.INFO, log_dir: str='logs'):
+    def __init__ (self, cgra_context: cgra_context=None, logger_name: str='', log_level: int=logging.INFO, log_dir: str='logs'):
         fn_name = dot_manager.__init__.__name__
         # Setup logger
         self.logger_name = None
@@ -50,10 +51,12 @@ class dot_manager:
             self.logger_name = self.__class__.__name__
             self.logger = self.log_setup(self.logger_name, log_level, log_dir)
         # State vars
-        self.dot_ctxt = dot_context(self.logger_name)
+        self.cgra_ctxt = cgra_context
+        self.dot_ctxt = dot_context(logger_name=self.logger_name, log_level=log_level)
         self.const_type = ["constVal", "int64", "float32"]      # Constant attributes of nodes to search for
     
     def log_setup (self, logger_name, log_level, log_dir) -> logging:
+        fn_name = dot_manager.log_setup.__name__
         cwd = os.getcwd()
         log_fname = logger_name + '.log'
         log_path = os.path.join(cwd, log_dir, log_fname)
@@ -143,7 +146,8 @@ class dot_manager:
                 for p in n_parents:
                     p_name = p.get_name()
                     p_opcode = p.get('opcode')
-                    if (p_opcode == 'input'):
+                    # Do not abosrb if node is a load/store
+                    if (p_opcode == 'input' and (p_opcode != 'load' or p_opcode != 'store')):
                         n.set('direct_in', 'true')
                         self.dot_ctxt.dot_graph.del_edge(p_name, n_name)
                         if (p_name not in marked_nodes):
@@ -154,7 +158,7 @@ class dot_manager:
                     c_name = c.get_name()
                     c_opcode = c.get('opcode')
                     absorb_full = n.get('direct_in')
-                    if (c_opcode == 'output' and absorb_full is None):
+                    if (c_opcode == 'output' and (p_opcode != 'load' or p_opcode != 'store') and absorb_full is None):
                         n.set('direct_out', 'true')
                         self.dot_ctxt.dot_graph.del_edge(n_name, c_name)
                         if (c_name not in marked_nodes):
@@ -326,8 +330,9 @@ class dot_manager:
         fn_name = dot_manager.assign_rank.__name__
         # We take advantage of dot from GraphViz to generate a DOT file with ranks
         # Visit https://forum.graphviz.org/t/ever-have-questions-about-the-ranking-of-a-large-graph/1511/2 for explanation
-        tmp_src_fname = "tmp_rank_src.dot"
-        tmp_dest_fname = "tmp_rank_dest.dot"
+        cwd = os.getcwd()
+        tmp_src_fname = os.path.join(cwd, '.tmp', "tmp_rank_src.dot")
+        tmp_dest_fname = os.path.join(cwd, '.tmp', "tmp_rank_dest.dot")
         self.dot_ctxt.dot_graph.write_raw(tmp_src_fname)
         with open(tmp_dest_fname, 'w') as ofile:
             subprocess.run(["dot", "-Gphase=3", tmp_src_fname], stdout=ofile)
@@ -431,6 +436,44 @@ class dot_manager:
                     self.dot_ctxt.dot_graph.del_edge(src_name, dest_name)
         # Update graph
         self.dot_ctxt.update(fn_name)
+    
+    def remove_bipartite(self) -> None:
+        fn_name = dot_manager.remove_bipartite.__name__
+        dnodes = self.dot_ctxt.dot_nodes
+        dedges = self.dot_ctxt.dot_edges
+        for n in dnodes:
+            n_name = n.get_name()
+            children = self.dot_ctxt.get_children(n_name)
+            for ch in children:
+                # Check if a path through each child is a bridge/extension path
+                ch_name = ch.get_name()
+                ch_opcode = ch.get('opcode')
+                if (ch_opcode == 'bridge'):
+                    # If the path is a bridge, delete path
+                    prev_name = n_name
+                    prev_opcode = n.get('opcode')
+                    cur_name = ch_name
+                    cur_opcode = ch_opcode
+                    while (cur_opcode == 'bridge'):
+                        self.dot_ctxt.dot_graph.del_edge(prev_name, cur_name)
+                        if (prev_opcode == 'bridge'):
+                            self.dot_ctxt.dot_graph.del_node(prev_name)
+                        next_child = self.dot_ctxt.get_children(cur_name)[0]
+                        prev_name = cur_name
+                        prev_opcode = cur_opcode
+                        cur_name = next_child.get_name()
+                        cur_opcode = next_child.get('opcode')
+                    # End of path reached. Copy final edge attribute.
+                    fin_edge = self.dot_ctxt.get_edge(prev_name, cur_name)
+                    fin_edge_attr = list(fin_edge.get_attributes().items())
+                    # Delete final edge and node.
+                    self.dot_ctxt.dot_graph.del_edge(prev_name, cur_name)
+                    self.dot_ctxt.dot_graph.del_node(prev_name)
+                    # Create direct edge from source to destination
+                    og_edge = self.dot_ctxt.new_edge(n_name, cur_name, fin_edge_attr)
+                    self.dot_ctxt.dot_graph.add_edge(og_edge)
+        # Update graph
+        self.dot_ctxt.update(fn_name)
 
     # Unroll the DFG
     def unroll (self, unroll_factor: int=1, breadth: int=1, depth: int=1, offset: int=0, incremental: bool=False) -> bool:
@@ -503,31 +546,189 @@ class dot_manager:
     def write_dot (self, dest_fname: str=""):
         self.dot_ctxt.dot_graph.write_raw(dest_fname)
 
+    def reflect_modification (self, blocks: int):
+        fn_name = dot_manager.reflect_modification.__name__
+        cwd = os.getcwd()
+        self.logger.debug(f'{fn_name} ||| Reflecting placement changes to DFG')
+        self.dot_ctxt.reflect_nodes()
+        # Dump intermediary DFG in temp folder
+        tmp_fname = self.dot_ctxt.dot_fpath[self.dot_ctxt.dot_fpath.rfind('/')+1:self.dot_ctxt.dot_fpath.rfind('.')] + f'_RefMod' + '.dot'
+        tmp_dest_fname = os.path.join(cwd, '.tmp', tmp_fname)
+        self.write_dot(tmp_dest_fname)
+        self.logger.debug(f'{fn_name} ||| Legalizing modified DFG')
+        self.remove_bipartite()
+        self.make_bipartite(blocks)
+        # Dump intermediary DFG in temp folder
+        tmp_fname = self.dot_ctxt.dot_fpath[self.dot_ctxt.dot_fpath.rfind('/')+1:self.dot_ctxt.dot_fpath.rfind('.')] + f'_BipMod' + '.dot'
+        tmp_dest_fname = os.path.join(cwd, '.tmp', tmp_fname)
+        self.write_dot(tmp_dest_fname)
+    
+    def generate (self, src_name: str, predicate_en: bool, max_incidence: int, blocks: int, unroll: int, 
+                  unroll_breadth: int, unroll_depth: int, unroll_offset: int, unroll_incremental: bool, 
+                  src_dir: str, dest_dir: str, force_en: bool=False, all_srcs: bool=False, dest_write_en: bool=True) -> bool:
+        fn_name = dot_manager.generate.__name__
+        gen_done = False
+
+        # Print setup
+        cwd = os.getcwd()
+        dest_dot_unroll_desc = f'B{blocks}_u{unroll}b{unroll_breadth}d{unroll_depth}o{unroll_offset}_P{1 if (predicate_en) else 0}'
+        dest_dot_desc = dest_dot_unroll_desc + 'i' if (unroll_incremental) else dest_dot_unroll_desc
+        build_fname = lambda fn, desc: str(fn).split('/')[-1].replace('.dot', f'_{desc}_output.dot')
+        if (all_srcs):
+            src_fnames = [f for f in os.listdir(src_dir) if (os.path.isfile(os.path.join(src_dir, f)))]
+            #src_fpath = [os.path.join(src_dir, f) for f in os.listdir(src_dir) if (os.path.isfile(os.path.join(src_dir, f)))]
+            dest_fpath = [os.path.join(dest_dir, build_fname(f, dest_dot_desc)) for f in os.listdir(src_dir) if (os.path.isfile(os.path.join(src_dir, f)))]
+        else:
+            src_fnames = [src_name]
+            #src_fpath = [os.path.join(src_dir, src_name)]
+            dest_fpath = [os.path.join(dest_dir, build_fname(src_name, dest_dot_desc))]
+
+        # Sanity check
+        if (len(src_fnames) == 0):
+            self.logger.error(f'{fn_name} ||| No sources available in path = {src_dir}')
+        
+        # Generate DFG
+        for sfn, df in zip(src_fnames, dest_fpath):
+            gen_done = False
+            sf = os.path.join(src_dir, sfn)
+            self.gen_dot_context(sf)
+            # Absorb reflexive edges
+            self.absorb_reflexive()
+            # Absorb constants
+            #dot_man.absorb_constants(dual_reg_en)
+            self.absorb_constants()
+            # Absorb IO
+            self.absorb_IO()
+            # Annotate edges
+            self.annotate_data_edges(predicate_en)
+            self.annotate_predicate_edges(predicate_en)
+            # Legalize DFG incidence
+            self.legalize_incidence(max_incidence)
+            # Assign rank to nodes
+            self.assign_rank()
+            # Unroll DFG
+            if (self.unroll(unroll, unroll_breadth, unroll_depth, unroll_offset, unroll_incremental)):
+                # Assign opID to each node
+                self.assign_opID()
+                # Make the graph bipartite
+                self.make_bipartite(blocks)
+                # Make all opcodes lowercase
+                self.make_lowerCase()
+                gen_done = True
+        
+            if (gen_done):
+                total_nodes = len(self.dot_ctxt.dot_nodes)
+                self.logger.info(f'{fn_name} ||| {sfn} || Blocks = {blocks} | Total nodes = {total_nodes}, max_rank = {self.dot_ctxt.dot_max_rank}, max_order = {self.dot_ctxt.dot_max_order} | (u, b, d) = ({unroll}, {unroll_breadth}, {unroll_depth})')
+                if (not force_en):
+                    in_str = input('Write dot file (y/n): ')
+                    if (in_str and in_str.lower()[0] == 'n'):
+                        self.logger.info(f'{fn_name} ||| Dot file write failed !')
+                        gen_done = False
+                        break
+            else:
+                self.logger.info(f'{fn_name} ||| Dot file write failed !')
+                break
+
+            # Print Dot file
+            if (dest_write_en):
+                self.write_dot(df)
+                self.logger.info(f'{fn_name} ||| Dot file write succeeded !')
+
+        return gen_done
+
+    # ----------- Custom automation methods ---------------
+
+    def var_blocks (self, src_name: str, predicate_en: bool, max_incidence: int, blocks: int, unroll: int, 
+                    unroll_breadth: int, unroll_depth: int, unroll_offset: int, unroll_incremental: bool, 
+                    src_dir: str, dest_dir: str, force_en: bool=False, all_srcs: bool=False) -> bool:
+        fn_name = dot_manager.var_blocks.__name__
+        gen_done = False
+
+        # Print setup
+        cwd = os.getcwd()
+        if (all_srcs):
+            src_names = [f for f in os.listdir(src_dir) if (os.path.isfile(os.path.join(src_dir, f)))]
+        else:
+            src_names = [src_name]
+        
+        # Sanity check
+        if (len(src_names) == 0):
+            self.logger.error(f'{fn_name} ||| No sources available in path = {src_dir}')
+
+        for sn in src_names:
+            for blk in range(2, blocks+1):
+                gen_done = self.generate(sn, predicate_en, max_incidence, blk, unroll, unroll_breadth, unroll_depth,
+                                         unroll_offset, unroll_incremental, src_dir, dest_dir, force_en, all_srcs=False)
+                if (not gen_done):
+                    break
+            if (not gen_done):
+                break
+        
+        return gen_done
+
 def main():
     fn_name = main.__name__
     cwd = os.getcwd()
 
     # CMD parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', action='store', default="", dest='dot_file', help='DOT file to parse')
-    parser.add_argument('--auto', action='store_true', dest='dot_auto', help='Automate DFG generation')
+    parser.add_argument('-f, --file', action='store', default='', dest='dot_file', help='DOT file to parse')
+    parser.add_argument('--force', action='store_true', dest='dot_force', help='Force DFG write')
+    parser.add_argument('--call', action='store', default='generate', dest='dot_call', help='Method name to call from manager')
     parser.add_argument('--cgra-radix', action='store', type=int, default=None, dest='dot_max_incidence', help='Max incidence of DFG node')
     parser.add_argument('--cgra-blocks', action='store', type=int, default=None, dest='dot_blocks', help='Number of physical blocks in CGRA')
+    parser.add_argument('--result-dir', action='store', default='', dest='dot_result_dir', help='Sub-directory to store results in')
+    parser.add_argument('--source-dir', action='store', default='', dest='dot_source_dir', help='Sub-directory to fetch sources from')
+    parser.add_argument('--log-level', action='store', default='debug', dest='dot_log_level', help='Logging level [notset, debug, info, warn, error, fatal]')
     parser.add_argument('-u', action='store', type=int, default=1, dest='dot_unroll', help='Unroll factor of DFG')
     parser.add_argument('-b', action='store', type=int, default=1, dest='dot_unroll_breadth', help='Unroll breadth')
     parser.add_argument('-d', action='store', type=int, default=1, dest='dot_unroll_depth', help='Unroll depth')
     parser.add_argument('-o', action='store', type=int, default=0, dest='dot_unroll_offset', help='Unroll depth offset')
     parser.add_argument('-I', action='store_true', dest='dot_unroll_incremental', help='Incremental unrolling in depth')
     parser.add_argument('-P', action='store_true', dest='dot_predicate_enable', help='Enable flag indicating arch supports predication')
-    parser.add_argument('--dual-reg', action='store_true', dest='dot_dual_reg', help='Flag to enable absorbtion of constants on top of reflexive')
+    parser.add_argument('--all-files', action='store_true', dest='dot_all_srcs', help='Generate DFGs for all files in source directory')
+    # Dual-Reg support removed, since the scenario where a PE node utilizes both accum and const simultaneously is less probable than them being used individually.
+    #parser.add_argument('--dual-reg', action='store_true', dest='dot_dual_reg', help='Flag to enable absorbtion of constants on top of reflexive')
     args = parser.parse_args()
 
+    # State var setup
+    log_levels = {'notset': logging.NOTSET, 'debug': logging.DEBUG, 'info': logging.INFO, 'warn': logging.WARN, 'error': logging.ERROR, 'fatal': logging.CRITICAL}
+    src_name = args.dot_file
+    force_en = args.dot_force
+    #dual_reg_en = args.dot_dual_reg
+    predicate_en = args.dot_predicate_enable
+    unroll = args.dot_unroll
+    unroll_breadth = args.dot_unroll_breadth
+    unroll_depth = args.dot_unroll_depth
+    unroll_offset = args.dot_unroll_offset
+    unroll_incremental = args.dot_unroll_incremental
+    max_incidence = args.dot_max_incidence
+    blocks = args.dot_blocks
+    fn_call_name = args.dot_call
+    result_dir = args.dot_result_dir
+    source_dir = args.dot_source_dir
+    all_srcs = args.dot_all_srcs
+    log_level = log_levels[args.dot_log_level]
+
+    # Paths
+    cgra_cfg_fpath = os.path.join(cwd, 'configs', 'cgra_config.yaml')
+    pe_cfg_fpath = os.path.join(cwd, 'configs', 'pe_config.yaml')
+    src_dir = 'dots/srcs'
+    if (source_dir):
+        src_dir = os.path.join(cwd, src_dir, source_dir)
+    dest_dir = 'dots/results'
+    if (result_dir):
+        result_dir = os.path.join(cwd, dest_dir, result_dir)
+        if not os.path.exists(result_dir):
+            os.makedirs(result_dir)
+        dest_dir = result_dir
+    
     # Setup Logging
     logger_name = "dot_manager"
     log_fname = "dot_manager.log"
-    log_path = os.path.join(cwd, 'logs', log_fname)
+    log_path = os.path.join(cwd, dest_dir, log_fname) if (result_dir) else os.path.join(cwd, 'logs', log_fname)
     logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.DEBUG)               # The level should be lowest level set in handlers
+    logger.setLevel(log_level)               # The level should be lowest level set in handlers
     log_format = logging.Formatter(fmt='%(asctime)s.%(msecs)03d - [%(levelname)s] ||| %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     # Stream Handler
     stream_handler = logging.StreamHandler()
@@ -540,72 +741,20 @@ def main():
     file_handler.setLevel(logging.DEBUG)
     logger.addHandler(file_handler)
 
-    # Print setup
-    dest_dot_unroll_desc = f'B{args.dot_blocks}_DR{1 if (args.dot_dual_reg) else 0}_u{args.dot_unroll}b{args.dot_unroll_breadth}d{args.dot_unroll_depth}o{args.dot_unroll_offset}_P{1 if (args.dot_predicate_enable) else 0}'
-    dest_dot_desc = dest_dot_unroll_desc + 'i' if (args.dot_unroll_incremental) else dest_dot_unroll_desc
-    dest_fname = str(args.dot_file).split('/')[-1].replace('.dot', f'_{dest_dot_desc}_output.dot')
-    dest_fpath = os.path.join(cwd, 'dots/results', dest_fname)
-
-    # Paths
-    dot_fpath = os.path.join(cwd, 'dots/srcs', args.dot_file)
-    cgra_cfg_fpath = os.path.join(cwd, 'configs', 'cgra_config.yaml')
-    pe_cfg_fpath = os.path.join(cwd, 'configs', 'pe_config.yaml')
-
     # CGRA context
     cgra_ctxt = cgra_context(cgra_cfg_fpath, pe_cfg_fpath, 'CGRA')
 
-    # State var setup
-    auto_en = args.dot_auto
-    dual_reg_en = args.dot_dual_reg
-    predicate_en = args.dot_predicate_enable
-    max_incidence = cgra_ctxt.cgra_radix if (auto_en) else args.dot_max_incidence
-    blocks = cgra_ctxt.cgra_phy_blocks if (auto_en) else args.dot_blocks
-
     # Dot Manager
-    dot_man = dot_manager(logger_name)
+    dot_man = dot_manager(cgra_ctxt, logger_name)
+    fn_call = getattr(dot_man, fn_call_name, None)
 
     # DFG gen
-    while (True):
-        dot_man.gen_dot_context(dot_fpath)
-        # Absorb reflexive edges
-        dot_man.absorb_reflexive()
-        # Absorb constants
-        dot_man.absorb_constants(dual_reg_en)
-        # Absorb IO
-        dot_man.absorb_IO()
-        # Annotate edges
-        dot_man.annotate_data_edges(predicate_en)
-        dot_man.annotate_predicate_edges(predicate_en)
-        # Legalize DFG incidence
-        dot_man.legalize_incidence(max_incidence)
-        # Assign rank to nodes
-        dot_man.assign_rank()
-        # Unroll DFG
-        if (dot_man.unroll(args.dot_unroll, args.dot_unroll_breadth, args.dot_unroll_depth, args.dot_unroll_offset, args.dot_unroll_incremental)):
-            # Assign opID to each node
-            dot_man.assign_opID()
-            # Make the graph bipartite
-            dot_man.make_bipartite(blocks)
-            # Make all opcodes lowercase
-            dot_man.make_lowerCase()
-            # Validate
-            total_nodes = len(dot_man.dot_ctxt.dot_nodes)
-            logger.info(f'{fn_name} ||| Blocks = {blocks} | Total nodes = {total_nodes}')
-            if (auto_en):
-                est_cgra_size = blocks * cgra_ctxt.cgra_block_size
-                if (total_nodes > est_cgra_size):
-                    blocks += 1
-                    logger.info(f'{fn_name} ||| Generated DFG nodes exceeds estimated CGRA size, re-run with blocks = {blocks}')
-                    continue
-            else:
-                in_str = input('Write dot file (y/n): ')
-                if (in_str and in_str.lower()[0] == 'n'):
-                    logger.info(f'{fn_name} ||| Dot file write failed !')
-                    break
-            # Print Dot file
-            dot_man.write_dot(dest_fpath)
-            logger.info(f'{fn_name} ||| Dot file write succeeded !')
-            break
+    if (fn_call is not None):
+        fn_call(src_name, predicate_en, max_incidence, blocks, unroll, 
+                unroll_breadth, unroll_depth, unroll_offset, unroll_incremental, 
+                src_dir, dest_dir, force_en, all_srcs)
+    else:
+        logger.error(f'{fn_name} ||| Requested method[{fn_call_name}] does not exist !')
 
 if __name__ == "__main__":
     main()

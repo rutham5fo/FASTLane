@@ -1,0 +1,6 @@
+2026-07-08 15:09:16.162 - [INFO] ||| run ||| Mapping: FAILED
+2026-07-08 15:09:16.163 - [INFO] ||| run ||| Mapper Run-time (s) = 83.54229306
+2026-07-08 15:09:16.164 - [DEBUG] ||| validate ||| Validating Edge: i100_add2_0 --> i101_load_0
+2026-07-08 15:09:16.165 - [DEBUG] ||| validate ||| Found source @ PE[0] | op_name = i100_add2_0, opID = 0
+2026-07-08 15:09:16.166 - [ERROR] ||| validate ||| Could not find destination PE
+2026-07-08 15:09:16.167 - [INFO] ||| validate ||| Validation: FAILED

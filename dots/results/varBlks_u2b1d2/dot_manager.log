@@ -1,0 +1,224 @@
+2026-06-28 01:52:43.955 - [INFO] ||| generate ||| accum.dot || Blocks = 2 | Total nodes = 38, max_rank = 18, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:43.977 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:44.180 - [INFO] ||| generate ||| accum.dot || Blocks = 3 | Total nodes = 38, max_rank = 18, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:44.201 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:44.413 - [INFO] ||| generate ||| accum.dot || Blocks = 4 | Total nodes = 42, max_rank = 18, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:44.434 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:44.651 - [INFO] ||| generate ||| accum.dot || Blocks = 5 | Total nodes = 38, max_rank = 18, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:44.670 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:44.880 - [INFO] ||| generate ||| accum.dot || Blocks = 6 | Total nodes = 44, max_rank = 18, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:44.898 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:45.107 - [INFO] ||| generate ||| accum.dot || Blocks = 7 | Total nodes = 44, max_rank = 18, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:45.125 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:45.336 - [INFO] ||| generate ||| accum.dot || Blocks = 8 | Total nodes = 42, max_rank = 18, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:45.356 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:48.023 - [INFO] ||| generate ||| aes.dot || Blocks = 2 | Total nodes = 472, max_rank = 165, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:48.056 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:50.707 - [INFO] ||| generate ||| aes.dot || Blocks = 3 | Total nodes = 472, max_rank = 165, max_order = 6 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:50.739 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:53.365 - [INFO] ||| generate ||| aes.dot || Blocks = 4 | Total nodes = 496, max_rank = 167, max_order = 6 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:53.397 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:56.047 - [INFO] ||| generate ||| aes.dot || Blocks = 5 | Total nodes = 510, max_rank = 167, max_order = 7 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:56.082 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:52:58.753 - [INFO] ||| generate ||| aes.dot || Blocks = 6 | Total nodes = 534, max_rank = 167, max_order = 7 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:52:58.787 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:01.459 - [INFO] ||| generate ||| aes.dot || Blocks = 7 | Total nodes = 570, max_rank = 165, max_order = 8 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:01.493 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:04.203 - [INFO] ||| generate ||| aes.dot || Blocks = 8 | Total nodes = 598, max_rank = 167, max_order = 9 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:04.237 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:04.518 - [INFO] ||| generate ||| cap.dot || Blocks = 2 | Total nodes = 52, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:04.536 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:04.773 - [INFO] ||| generate ||| cap.dot || Blocks = 3 | Total nodes = 52, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:04.793 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:05.075 - [INFO] ||| generate ||| cap.dot || Blocks = 4 | Total nodes = 52, max_rank = 23, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:05.094 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:05.364 - [INFO] ||| generate ||| cap.dot || Blocks = 5 | Total nodes = 52, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:05.385 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:05.693 - [INFO] ||| generate ||| cap.dot || Blocks = 6 | Total nodes = 54, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:05.712 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:05.966 - [INFO] ||| generate ||| cap.dot || Blocks = 7 | Total nodes = 54, max_rank = 22, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:05.986 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:06.240 - [INFO] ||| generate ||| cap.dot || Blocks = 8 | Total nodes = 58, max_rank = 23, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:06.258 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:05.623 - [INFO] ||| generate ||| conv2d.dot || Blocks = 2 | Total nodes = 34, max_rank = 16, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:05.641 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:05.925 - [INFO] ||| generate ||| conv2d.dot || Blocks = 3 | Total nodes = 34, max_rank = 16, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:05.932 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:06.224 - [INFO] ||| generate ||| conv2d.dot || Blocks = 4 | Total nodes = 34, max_rank = 16, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:06.232 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:06.540 - [INFO] ||| generate ||| conv2d.dot || Blocks = 5 | Total nodes = 34, max_rank = 16, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:06.548 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:06.837 - [INFO] ||| generate ||| conv2d.dot || Blocks = 6 | Total nodes = 34, max_rank = 16, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:06.845 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:07.136 - [INFO] ||| generate ||| conv2d.dot || Blocks = 7 | Total nodes = 34, max_rank = 16, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:07.144 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:07.445 - [INFO] ||| generate ||| conv2d.dot || Blocks = 8 | Total nodes = 34, max_rank = 16, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:07.452 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:07.743 - [INFO] ||| generate ||| conv3d.dot || Blocks = 2 | Total nodes = 44, max_rank = 18, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:07.763 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:08.007 - [INFO] ||| generate ||| conv3d.dot || Blocks = 3 | Total nodes = 44, max_rank = 18, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:08.015 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:08.269 - [INFO] ||| generate ||| conv3d.dot || Blocks = 4 | Total nodes = 44, max_rank = 18, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:08.276 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:08.574 - [INFO] ||| generate ||| conv3d.dot || Blocks = 5 | Total nodes = 48, max_rank = 18, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:08.594 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:08.860 - [INFO] ||| generate ||| conv3d.dot || Blocks = 6 | Total nodes = 44, max_rank = 18, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:08.868 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:09.122 - [INFO] ||| generate ||| conv3d.dot || Blocks = 7 | Total nodes = 48, max_rank = 18, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:09.143 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:09.399 - [INFO] ||| generate ||| conv3d.dot || Blocks = 8 | Total nodes = 46, max_rank = 18, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:09.419 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:09.999 - [INFO] ||| generate ||| fft_radix4.dot || Blocks = 2 | Total nodes = 76, max_rank = 8, max_order = 12 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:10.021 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:10.563 - [INFO] ||| generate ||| fft_radix4.dot || Blocks = 3 | Total nodes = 76, max_rank = 8, max_order = 12 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:10.582 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:11.166 - [INFO] ||| generate ||| fft_radix4.dot || Blocks = 4 | Total nodes = 76, max_rank = 8, max_order = 12 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:11.183 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:11.747 - [INFO] ||| generate ||| fft_radix4.dot || Blocks = 5 | Total nodes = 76, max_rank = 8, max_order = 12 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:11.764 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:12.341 - [INFO] ||| generate ||| fft_radix4.dot || Blocks = 6 | Total nodes = 76, max_rank = 8, max_order = 12 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:12.360 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:12.914 - [INFO] ||| generate ||| fft_radix4.dot || Blocks = 7 | Total nodes = 76, max_rank = 8, max_order = 12 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:12.933 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:13.504 - [INFO] ||| generate ||| fft_radix4.dot || Blocks = 8 | Total nodes = 76, max_rank = 8, max_order = 12 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:13.524 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:13.696 - [INFO] ||| generate ||| fir.dot || Blocks = 2 | Total nodes = 24, max_rank = 14, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:13.712 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:13.861 - [INFO] ||| generate ||| fir.dot || Blocks = 3 | Total nodes = 24, max_rank = 14, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:13.867 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:14.026 - [INFO] ||| generate ||| fir.dot || Blocks = 4 | Total nodes = 24, max_rank = 14, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:14.037 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:14.183 - [INFO] ||| generate ||| fir.dot || Blocks = 5 | Total nodes = 24, max_rank = 14, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:14.191 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:14.358 - [INFO] ||| generate ||| fir.dot || Blocks = 6 | Total nodes = 24, max_rank = 14, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:14.369 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:14.519 - [INFO] ||| generate ||| fir.dot || Blocks = 7 | Total nodes = 24, max_rank = 14, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:14.526 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:14.684 - [INFO] ||| generate ||| fir.dot || Blocks = 8 | Total nodes = 24, max_rank = 14, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:14.693 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:14.973 - [INFO] ||| generate ||| mac2.dot || Blocks = 2 | Total nodes = 50, max_rank = 20, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:14.994 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:15.274 - [INFO] ||| generate ||| mac2.dot || Blocks = 3 | Total nodes = 50, max_rank = 20, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:15.292 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:15.578 - [INFO] ||| generate ||| mac2.dot || Blocks = 4 | Total nodes = 50, max_rank = 20, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:15.597 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:15.855 - [INFO] ||| generate ||| mac2.dot || Blocks = 5 | Total nodes = 52, max_rank = 20, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:15.873 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:16.125 - [INFO] ||| generate ||| mac2.dot || Blocks = 6 | Total nodes = 54, max_rank = 20, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:16.143 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:16.403 - [INFO] ||| generate ||| mac2.dot || Blocks = 7 | Total nodes = 52, max_rank = 20, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:16.424 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:16.693 - [INFO] ||| generate ||| mac2.dot || Blocks = 8 | Total nodes = 54, max_rank = 20, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:16.711 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:16.910 - [INFO] ||| generate ||| matmul.dot || Blocks = 2 | Total nodes = 30, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:16.926 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:17.116 - [INFO] ||| generate ||| matmul.dot || Blocks = 3 | Total nodes = 30, max_rank = 14, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:17.136 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:17.310 - [INFO] ||| generate ||| matmul.dot || Blocks = 4 | Total nodes = 30, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:17.317 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:17.502 - [INFO] ||| generate ||| matmul.dot || Blocks = 5 | Total nodes = 30, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:17.520 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:17.702 - [INFO] ||| generate ||| matmul.dot || Blocks = 6 | Total nodes = 30, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:17.711 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:17.900 - [INFO] ||| generate ||| matmul.dot || Blocks = 7 | Total nodes = 30, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:17.907 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:18.082 - [INFO] ||| generate ||| matmul.dot || Blocks = 8 | Total nodes = 30, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:18.090 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:18.718 - [INFO] ||| generate ||| microspeech.dot || Blocks = 2 | Total nodes = 118, max_rank = 28, max_order = 8 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:18.740 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:19.342 - [INFO] ||| generate ||| microspeech.dot || Blocks = 3 | Total nodes = 118, max_rank = 28, max_order = 8 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:19.363 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:19.998 - [INFO] ||| generate ||| microspeech.dot || Blocks = 4 | Total nodes = 120, max_rank = 28, max_order = 9 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:20.019 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:20.612 - [INFO] ||| generate ||| microspeech.dot || Blocks = 5 | Total nodes = 120, max_rank = 28, max_order = 8 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:20.634 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:21.225 - [INFO] ||| generate ||| microspeech.dot || Blocks = 6 | Total nodes = 120, max_rank = 28, max_order = 8 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:21.245 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:21.843 - [INFO] ||| generate ||| microspeech.dot || Blocks = 7 | Total nodes = 120, max_rank = 28, max_order = 8 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:21.865 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:22.486 - [INFO] ||| generate ||| microspeech.dot || Blocks = 8 | Total nodes = 122, max_rank = 28, max_order = 9 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:22.505 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:22.824 - [INFO] ||| generate ||| mults2.dot || Blocks = 2 | Total nodes = 50, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:22.843 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:23.118 - [INFO] ||| generate ||| mults2.dot || Blocks = 3 | Total nodes = 50, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:23.139 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:23.414 - [INFO] ||| generate ||| mults2.dot || Blocks = 4 | Total nodes = 52, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:23.433 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:23.709 - [INFO] ||| generate ||| mults2.dot || Blocks = 5 | Total nodes = 54, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:23.727 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:23.992 - [INFO] ||| generate ||| mults2.dot || Blocks = 6 | Total nodes = 54, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:24.011 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:24.300 - [INFO] ||| generate ||| mults2.dot || Blocks = 7 | Total nodes = 54, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:24.307 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:24.586 - [INFO] ||| generate ||| mults2.dot || Blocks = 8 | Total nodes = 52, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:24.607 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:24.794 - [INFO] ||| generate ||| simple.dot || Blocks = 2 | Total nodes = 28, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:24.810 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:24.964 - [INFO] ||| generate ||| simple.dot || Blocks = 3 | Total nodes = 28, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:24.981 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:25.140 - [INFO] ||| generate ||| simple.dot || Blocks = 4 | Total nodes = 28, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:25.159 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:25.334 - [INFO] ||| generate ||| simple.dot || Blocks = 5 | Total nodes = 28, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:25.352 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:25.508 - [INFO] ||| generate ||| simple.dot || Blocks = 6 | Total nodes = 28, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:25.525 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:25.693 - [INFO] ||| generate ||| simple.dot || Blocks = 7 | Total nodes = 30, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:25.709 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:25.871 - [INFO] ||| generate ||| simple.dot || Blocks = 8 | Total nodes = 32, max_rank = 14, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:25.889 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:26.098 - [INFO] ||| generate ||| simple2.dot || Blocks = 2 | Total nodes = 32, max_rank = 14, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:26.115 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:26.287 - [INFO] ||| generate ||| simple2.dot || Blocks = 3 | Total nodes = 32, max_rank = 14, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:26.307 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:26.505 - [INFO] ||| generate ||| simple2.dot || Blocks = 4 | Total nodes = 32, max_rank = 14, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:26.521 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:26.702 - [INFO] ||| generate ||| simple2.dot || Blocks = 5 | Total nodes = 32, max_rank = 14, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:26.719 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:26.903 - [INFO] ||| generate ||| simple2.dot || Blocks = 6 | Total nodes = 32, max_rank = 14, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:26.921 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:27.094 - [INFO] ||| generate ||| simple2.dot || Blocks = 7 | Total nodes = 34, max_rank = 14, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:27.111 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:27.293 - [INFO] ||| generate ||| simple2.dot || Blocks = 8 | Total nodes = 36, max_rank = 14, max_order = 5 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:27.311 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:27.566 - [INFO] ||| generate ||| spmv.dot || Blocks = 2 | Total nodes = 48, max_rank = 22, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:27.582 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:27.827 - [INFO] ||| generate ||| spmv.dot || Blocks = 3 | Total nodes = 48, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:27.844 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:28.090 - [INFO] ||| generate ||| spmv.dot || Blocks = 4 | Total nodes = 48, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:28.109 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:28.342 - [INFO] ||| generate ||| spmv.dot || Blocks = 5 | Total nodes = 52, max_rank = 22, max_order = 3 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:28.360 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:28.600 - [INFO] ||| generate ||| spmv.dot || Blocks = 6 | Total nodes = 52, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:28.618 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:28.887 - [INFO] ||| generate ||| spmv.dot || Blocks = 7 | Total nodes = 52, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:28.905 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:29.140 - [INFO] ||| generate ||| spmv.dot || Blocks = 8 | Total nodes = 52, max_rank = 22, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:29.157 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:29.367 - [INFO] ||| generate ||| stencil.dot || Blocks = 2 | Total nodes = 18, max_rank = 6, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:29.385 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:29.554 - [INFO] ||| generate ||| stencil.dot || Blocks = 3 | Total nodes = 18, max_rank = 6, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:29.561 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:29.739 - [INFO] ||| generate ||| stencil.dot || Blocks = 4 | Total nodes = 18, max_rank = 6, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:29.746 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:29.917 - [INFO] ||| generate ||| stencil.dot || Blocks = 5 | Total nodes = 18, max_rank = 6, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:29.924 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:30.105 - [INFO] ||| generate ||| stencil.dot || Blocks = 6 | Total nodes = 18, max_rank = 6, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:30.112 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:30.276 - [INFO] ||| generate ||| stencil.dot || Blocks = 7 | Total nodes = 18, max_rank = 6, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:30.283 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:30.464 - [INFO] ||| generate ||| stencil.dot || Blocks = 8 | Total nodes = 18, max_rank = 6, max_order = 4 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:30.472 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:30.587 - [INFO] ||| generate ||| sum.dot || Blocks = 2 | Total nodes = 12, max_rank = 10, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:30.603 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:30.702 - [INFO] ||| generate ||| sum.dot || Blocks = 3 | Total nodes = 12, max_rank = 10, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:30.709 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:30.808 - [INFO] ||| generate ||| sum.dot || Blocks = 4 | Total nodes = 12, max_rank = 10, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:30.815 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:30.946 - [INFO] ||| generate ||| sum.dot || Blocks = 5 | Total nodes = 12, max_rank = 10, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:30.953 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:31.059 - [INFO] ||| generate ||| sum.dot || Blocks = 6 | Total nodes = 12, max_rank = 10, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:31.065 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:31.162 - [INFO] ||| generate ||| sum.dot || Blocks = 7 | Total nodes = 12, max_rank = 10, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:31.168 - [INFO] ||| generate ||| Dot file write succeeded !
+2026-06-28 01:53:31.262 - [INFO] ||| generate ||| sum.dot || Blocks = 8 | Total nodes = 12, max_rank = 10, max_order = 2 | (u, b, d) = (2, 1, 2)
+2026-06-28 01:53:31.271 - [INFO] ||| generate ||| Dot file write succeeded !

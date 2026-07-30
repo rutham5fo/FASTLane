@@ -232,6 +232,7 @@ class placer:
         trt_pe_context = None
         trt_pe_routing_cost = None
         trt_shadow_pe_routing_cost = None
+        unroutable = False
         # Get node's name, opID, opcode, rank and compute cgra_block
         n_name = node.get_name()
         n_attr = node.get_attributes()
@@ -258,6 +259,7 @@ class placer:
                 self.logger.error(f'{fn_name} ||| No candidate PE available to map opcode[{n_opcode}] from node[{n_name}]')
             else:
                 for cpid, cand_pe in enumerate(cand_pe_list):
+                    unroutable = False
                     # List to keep track of used opGroups
                     used_opGroups = []
                     lp_abort = False
@@ -294,6 +296,7 @@ class placer:
                     # the target-node's current or shadow-block.
                     cand_pe_id, cand_pe_routing_cost, cand_shadow_pe_routing_cost = self.is_pe_routable(n_name, n_blk, cand_pe_id, fin_edges, fout_edges, parents, children, blk_pe_info, shadow_blk_pe_info)
                     if (cand_pe_id is None):
+                        unroutable = True
                         continue
                     trt_pe_ID = cand_pe_id
                     trt_pe_type = cand_pe_type
@@ -312,10 +315,10 @@ class placer:
                 # Update PE routing resources
                 self.update_pe_routing_resource(n_blk, n_shadow_blk, trt_pe_ID, trt_pe_routing_cost, trt_shadow_pe_routing_cost, blk_pe_info, shadow_blk_pe_info)
             else:
-                self.logger.error(f'{fn_name} ||| Failed to place node[{n_name}] with opcode[{n_opcode}] as suitable candidate not found')
+                self.logger.error(f'{fn_name} ||| Failed to place node[{n_name}] with opcode[{n_opcode}] as suitable candidate not found | unroutable = {unroutable}')
         else:
             self.logger.error(f'{fn_name} ||| Opcode[{n_opcode}] not supported by block[{n_blk}]')
-        return (trt_pe_ID, trt_pe_context)
+        return (trt_pe_ID, trt_pe_context, unroutable)
     
     # Run placer on given dot file according to cgra_context built from config files
     def run (self, dot_ctxt=None) -> bool:
@@ -325,41 +328,118 @@ class placer:
         pe_info = copy.deepcopy(self.cgra_ctxt.pe_info)
         # Get dot nodes
         dnodes = dot_ctxt.dot_nodes
+        dnodes_collection = copy.deepcopy(dot_ctxt.dot_rank_collection)
+        max_nrank = dot_ctxt.dot_max_rank
+        max_brank = self.cgra_ctxt.cgra_blocks + max_nrank
+        #ranks = list(dnodes_collection.keys())
+        #ranks.sort()
         dedges = dot_ctxt.dot_edges
         total_nodes = len(dnodes)
         nodes_placed = 0
         self.logger.info(f'{fn_name} ||| Starting Placer run: Total nodes = {total_nodes}')
         placed = False
-        for n in dnodes:
-            n_name = n.get_name()
-            n_children = dot_ctxt.get_children(n.get_name())
-            n_parents = dot_ctxt.get_parents(n.get_name())
-            n_opcode = n.get('opcode')
-            n_opID = n.get('opID')
-            p_opID = [p.get('opID') for p in n_parents]
-            n_rank = int(n.get('rank'))
-            # The virtual blocks (cgra_ctxt.cgra_blocks) cover the whole triangle wave.
-            # Hence its ok to get a nodes block using rank and virtual blocks.
-            n_blk = n_rank % self.cgra_ctxt.cgra_blocks
-            target_pe_ID = None
-            self.logger.debug(f'{fn_name} ||| node = {n_name}, opID = {n_opID}, opcode = {n_opcode}, block = {n_blk}')
-            # Get candidate PE
-            target_pe_ID, _ = self.find_candidate_pe(n, n_parents, n_children, dedges, avail_pe, pe_info)
-            if (target_pe_ID is None):
-                self.logger.error(f'{fn_name} ||| No target PE found for PE_opcode[{n_opcode}] of node[{n_name}] !')
+        retry = False
+        reflect_nodes = []
+        # Place nodes by rank
+        cur_n_rank = 0
+        while (cur_n_rank <= max_brank):
+        #for r in ranks:
+            n_carry_over = []
+            next_n_rank = cur_n_rank+1
+            rnodes = copy.deepcopy(dnodes_collection[cur_n_rank])
+            self.logger.debug(f'{fn_name} ||| Placing nodes in rank[{cur_n_rank}] = {[rn.get_name() for rn in rnodes]}')
+            for n in rnodes:
+                n_name = n.get_name()
+                n_children = dot_ctxt.get_children(n.get_name())
+                n_parents = dot_ctxt.get_parents(n.get_name())
+                n_opcode = n.get('opcode')
+                n_opID = n.get('opID')
+                p_opID = [p.get('opID') for p in n_parents]
+                n_rank = int(n.get('rank'))
+                routing = self.assert_routing_opcode(n_opcode)
+                # The virtual blocks (cgra_ctxt.cgra_blocks) cover the whole triangle wave.
+                # Hence its ok to get a nodes block using rank and virtual blocks.
+                n_blk = n_rank % self.cgra_ctxt.cgra_blocks
+                target_pe_ID = None
+                unroutable = False
+                self.logger.debug(f'{fn_name} ||| node = {n_name}, opID = {n_opID}, opcode = {n_opcode}, block = {n_blk}')
+                # Quick sanity check
+                if (n_rank != cur_n_rank):
+                    self.logger.error(f'{fn_name} ||| Collective rank[{cur_n_rank}] does not match node\'s[{n_rank}], aborting placement !')
+                    break
+                # Get candidate PE
+                target_pe_ID, _, unroutable = self.find_candidate_pe(n, n_parents, n_children, dedges, avail_pe, pe_info)
+                if (target_pe_ID is None):
+                    self.logger.error(f'{fn_name} ||| No target PE found for PE_opcode[{n_opcode}] of node[{n_name}] in block[{n_blk}] !')
+                    if (unroutable and routing):
+                        # Routing nodes are a result of legalization. Hence they cannot
+                        # be moved. For ex: An extension/bridge, when moved will only 
+                        # create more bridges. Therefor, if placement fails for a 
+                        # routing node, this cannot be fixed and the DFG has to be discarded.
+                        self.logger.error(f'{fn_name} ||| Cannot move this node[{n_name}] to rank[{next_n_rank}]')
+                        retry = False
+                        break
+                    else:
+                        # TODO: A node to move is selected depending on the cost of movement.
+                        #       The cost is determined by the routing cost of the a node.
+                        #       Ex: Let node A have 1-in and 2-out, while B has 1-in and 1-out.
+                        #           Moving A will generate atleast 3 bridge nodes, whereas
+                        #           moving B will generate atleast 2 bridges. Thus, we select 
+                        #           the node with least moving cost and move it to the
+                        #           subsequent rank in hopes of finding a free PE there.
+                        #       This is the point where SA may be included to a global minimum.
+                        # But for now, simply move the node that cant be placed onto the next rank.
+                        n.set('rank', str(next_n_rank))
+                        self.logger.warning(f'{fn_name} ||| Moving node[{n_name}] to rank[{n.get('rank')}] and continuing')
+                        #dnodes_collection[next_n_rank].append(n)
+                        n_carry_over.append(n)
+                        # Find and delete node in current rank
+                        nid = [id for id, dn in enumerate(dnodes_collection[cur_n_rank]) if (dn.get_name() == n_name)][0]
+                        del dnodes_collection[cur_n_rank][nid]
+                        # Keep track of nodes to modify in DFG
+                        reflected = False
+                        for rid in range(len(reflect_nodes)):
+                            if (n.get_name() == reflect_nodes[rid].get_name()):
+                                reflect_nodes[rid] = n
+                                reflected = True
+                                break
+                        if (not reflected):
+                            reflect_nodes.append(n)
+                        retry = True
+                else:
+                    # Place node in target PE by creating an entry in mapper_context's pe_meta
+                    # NOTE: Mapper context stores all relevant data using global_peID
+                    global_target_pe_ID = self.mapper_ctxt.get_globalPE_id(target_pe_ID, n_blk)
+                    self.mapper_ctxt.add_node2pe(n_name, global_target_pe_ID)
+                    self.mapper_ctxt.add_pe_meta_opcode(global_target_pe_ID, n_name, n_opcode, n_opID, p_opID)
+                    self.logger.debug(f'{fn_name} ||| Successfully placed node[{n_name}], opID[{n_opID}], opcode[{n_opcode}] @ target PE[{global_target_pe_ID}] in block[{n_blk}]')
+                    # Find and delete node in current rank
+                    nid = [id for id, dn in enumerate(dnodes_collection[cur_n_rank]) if (dn.get_name() == n_name)][0]
+                    del dnodes_collection[cur_n_rank][nid]
+                    # Update tracker
+                    nodes_placed += 1
+            # Insert carry over to the begining of next rank's collection
+            if (dnodes_collection.get(next_n_rank, None) is not None):
+                self.logger.debug(f'{fn_name} ||| Before Carry: Next dnodes_collection[{next_n_rank}] = {[rn.get_name() for rn in dnodes_collection[next_n_rank]]}')
+                dnodes_collection[next_n_rank][0:0] = n_carry_over
+            else:
+                dnodes_collection[next_n_rank] = n_carry_over
+                if (cur_n_rank == max_brank and len(n_carry_over) > 0):
+                    self.logger.error(f'{fn_name} ||| Exhausted moves, still have carry_over !')
+                    retry = False
+            self.logger.debug(f'{fn_name} ||| Post Carry: Next dnodes_collection[{next_n_rank}] = {[rn.get_name() for rn in dnodes_collection[next_n_rank]]}')
+            self.logger.debug(f'{fn_name} ||| Nodes to reflect = {[rn.get_name() for rn in reflect_nodes]}')
+            self.logger.debug(f'{fn_name} ||| reflected ranks = {[rn.get('rank') for rn in reflect_nodes]}')
+            # Exit if the DFG can no longer be routed or All nodes have been placed
+            if ((unroutable and routing) or nodes_placed == total_nodes):
                 break
-            # Place node in target PE by creating an entry in mapper_context's pe_meta
-            # NOTE: Mapper context stores all relevant data using global_peID
-            global_target_pe_ID = self.mapper_ctxt.get_globalPE_id(target_pe_ID, n_blk)
-            self.mapper_ctxt.add_node2pe(n_name, global_target_pe_ID)
-            self.mapper_ctxt.add_pe_meta_opcode(global_target_pe_ID, n_name, n_opcode, n_opID, p_opID)
-            self.logger.debug(f'{fn_name} ||| Successfully placed node[{n_name}], opID[{n_opID}], opcode[{n_opcode}] @ target PE[{global_target_pe_ID}] in block[{n_blk}]')
-            # Update tracker
-            nodes_placed += 1
+            cur_n_rank = next_n_rank
+        if (retry):
+            dot_ctxt.dot_reflect = reflect_nodes
         placed = True if (nodes_placed == total_nodes) else False
         pass_fail_flag = 'PASSED' if (placed) else 'FAILED'
         self.logger.info(f'{fn_name} ||| End of Placer run: Total nodes = {len(dnodes)} | Nodes placed = {nodes_placed} | Placement: {pass_fail_flag}')
-        return placed
+        return placed, retry
     
 def _test ():
     fn_name = _test.__name__

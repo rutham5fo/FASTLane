@@ -4,47 +4,59 @@ import os
 import time
 import argparse
 from contexts.cgra_context import cgra_context
-from contexts.dot_context import dot_context
+#from contexts.dot_context import dot_context
 from contexts.mapper_context import mapper_context
+from dots_manager.manager import dot_manager
 from mapper.placer import placer
 from mapper.router import router
 
 class mapper:
 
-    def __init__ (self, cgra_config_fpath: str='', pe_config_fpath: str='', cgra_name: str='', logger_name: str='', log_level: int=logging.INFO, log_dir: str='logs') -> None:
+    def __init__ (self, dot_fpath: str='', cgra_config_fpath: str='', pe_config_fpath: str='', cgra_name: str='', logger_name: str='', log_level: int=logging.INFO, log_dir: str='logs', log_fname: str='', combine_logs: bool=False) -> None:
         fn_name = placer.__init__.__name__
         # Setup logger
-        self.logger_name = None
+        self.logger_name = self.__class__.__name__
+        self.ctxt_logger_name = self.logger_name if (combine_logs) else ''
         self.logger = None
         if (logger_name):
             self.logger_name = logger_name
             self.logger = logging.getLogger(self.logger_name)
         else:
-            self.logger_name = self.__class__.__name__
-            self.logger = self.log_setup(self.logger_name, log_level, log_dir)
+            self.logger = self.log_setup(self.logger_name, log_level, log_dir, log_fname)
         # State vars
+        self.dot_blocks = None
+        self.dot_ctxt = None
         self.cgra_ctxt = None
         self.mapper_ctxt = None
         self.plcr = None
         self.rtr = None
         # Setup vars
-        if (not cgra_config_fpath or not pe_config_fpath or not cgra_name):
-            err_msg = f'{fn_name} ||| Please provide valid CGRA name and config files for CGRA and PE definition !'
+        if (not dot_fpath or not cgra_config_fpath or not pe_config_fpath or not cgra_name):
+            err_msg = f'{fn_name} ||| Please provide valid DFG file, CGRA name, config files for CGRA, and PE definition !'
             self.logger.error(err_msg)
             raise ValueError(err_msg)
         else:
             try:
-                self.cgra_ctxt = cgra_context(cgra_config_fpath, pe_config_fpath, cgra_name, log_level=logging.DEBUG)
+                self.dot_man = dot_manager(self.cgra_ctxt, logger_name=self.ctxt_logger_name, log_level=logging.DEBUG)
             except Exception as ex:
                 self.logger.error(f'{fn_name} ||| Execption: {ex}')
                 raise
+            try:
+                self.cgra_ctxt = cgra_context(cgra_config_fpath, pe_config_fpath, cgra_name, logger_name=self.ctxt_logger_name, log_level=logging.DEBUG)
+            except Exception as ex:
+                self.logger.error(f'{fn_name} ||| Execption: {ex}')
+                raise
+            self.dot_blocks = int(dot_fpath[dot_fpath.rfind('_B')+2:dot_fpath.rfind('_u')])
+            self.dot_man.gen_dot_context(dot_fpath)
+            self.dot_ctxt = self.dot_man.dot_ctxt
             self.mapper_ctxt = mapper_context(self.cgra_ctxt.cgra_blocks, self.cgra_ctxt.cgra_block_size, self.cgra_ctxt.cgra_radix, logger_name=self.logger_name)
-            self.plcr = placer(self.mapper_ctxt, self.cgra_ctxt, log_level=logging.DEBUG)
-            self.rtr = router(self.mapper_ctxt, self.cgra_ctxt, log_level=logging.DEBUG)
+            self.plcr = placer(self.mapper_ctxt, self.cgra_ctxt, logger_name=self.ctxt_logger_name, log_level=logging.DEBUG)
+            self.rtr = router(self.mapper_ctxt, self.cgra_ctxt, logger_name=self.ctxt_logger_name, log_level=logging.DEBUG)
     
-    def log_setup (self, logger_name, log_level, log_dir) -> logging:
+    def log_setup (self, logger_name, log_level, log_dir, log_fname) -> logging:
+        fn_name = mapper.log_setup.__name__
         cwd = os.getcwd()
-        log_fname = logger_name + '.log'
+        log_fname = log_fname + '.log' if (log_fname) else logger_name + '.log'
         log_path = os.path.join(cwd, log_dir, log_fname)
         logger = logging.getLogger(logger_name)
         logger.setLevel(log_level)               # The level should be lowest level set in handlers
@@ -62,33 +74,43 @@ class mapper:
         return logger
     
     # Run placer on given dot file according to cgra_context built from config files
-    def run (self, dot_ctxt: dot_context=None, dot_blocks: int=-1) -> bool:
+    def run (self) -> bool:
         fn_name = placer.run.__name__
         mapped = False
+        placed = False
+        retry_placement = False
         # Sanity check
-        if (dot_context is None or dot_blocks < 0 or dot_blocks != self.cgra_ctxt.cgra_phy_blocks):
-            self.logger.error(f'{fn_name} ||| DFG blocks[{dot_blocks}] and CGRA blocks[{self.cgra_ctxt.cgra_phy_blocks}] dont match (or) DOT Context unavailable !')
+        if (self.dot_ctxt is None or self.dot_blocks < 0 or self.dot_blocks != self.cgra_ctxt.cgra_phy_blocks):
+            self.logger.error(f'{fn_name} ||| DFG blocks[{self.dot_blocks}] and CGRA blocks[{self.cgra_ctxt.cgra_phy_blocks}] dont match (or) DOT Context unavailable !')
         else:
             # Set start time
             _mpr_start = time.perf_counter_ns()
-            # Run placer
-            if (self.plcr.run(dot_ctxt)):
+            while (True):
+                # Run placer
+                placed, retry_placement = self.plcr.run(self.dot_ctxt)
+                if (retry_placement):
+                    # Legalize the modified DFG and re-run through placer
+                    self.dot_man.reflect_modification(self.dot_blocks)
+                    self.logger.info(f'{fn_name} ||| Retrying Placement !')
+                else:
+                    break
+            if (placed):
                 # Run router
-                mapped = self.rtr.run(dot_ctxt)
+                mapped = self.rtr.run(self.dot_ctxt)
                 self.mapper_ctxt.print_data()
             # Measure run_time
             _mpr_end = time.perf_counter_ns()
             if (mapped):
                 self.logger.info(f'{fn_name} ||| Mapping: SUCCESS')
             else:
-                self.logger.error(f'{fn_name} ||| Mapping: FAILED')
+                self.logger.info(f'{fn_name} ||| Mapping: FAILED')
             self.logger.info(f'{fn_name} ||| Mapper Run-time (s) = {(_mpr_end-_mpr_start)/1000000000}')
         return mapped
     
-    def validate (self, dot_ctxt: dot_context=None) -> bool:
+    def validate (self) -> bool:
         fn_name = mapper.validate.__name__
         valid = True
-        dedges = dot_ctxt.dot_edges
+        dedges = self.dot_ctxt.dot_edges
         pe_meta = self.mapper_ctxt.pe_meta
         for e in dedges:
             n_src = e.get_source()
@@ -139,23 +161,31 @@ def _test ():
     # CMD parser
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', action='store', default="", dest='dot_file', help='DOT file to parse')
+    parser.add_argument('--log-name', action='store', default='', dest='log_name', help='Logfile name')
+    parser.add_argument('--log-level', action='store', default='debug', dest='log_level', help='Logging level [notset, debug, info, warn, error, fatal]')
+    parser.add_argument('--log-dir', action='store', default='logs', dest='log_dir', help='Logfile directory')
+    parser.add_argument('--combine-logs', action='store_true', dest='log_combine', help='Combines all sub-module logs into mapper\'s')
     args = parser.parse_args()
 
+    # State vars
+    log_levels = {'notset': logging.NOTSET, 'debug': logging.DEBUG, 'info': logging.INFO, 'warn': logging.WARN, 'error': logging.ERROR, 'fatal': logging.CRITICAL}
+    dot_file_name = args.dot_file
+    log_name = args.log_name
+    log_level = log_levels[args.log_level]
+    log_dir = args.log_dir
+    log_combine = args.log_combine
+
     # Setup and fpaths
-    dot_fpath = os.path.join(cwd, 'dots', 'results', args.dot_file)
+    dot_fpath = os.path.join(cwd, 'dots', 'results', dot_file_name)
     cgra_cfg_fpath = os.path.join(cwd, 'configs', 'cgra_config.yaml')
     pe_cfg_fpath = os.path.join(cwd, 'configs', 'pe_config.yaml')
-    # Get dot_context
-    dot_ctxt = dot_context(log_level=logging.DEBUG)
-    dot_ctxt.get_graph(dot_fpath)
-    dot_blocks = int(dot_fpath[dot_fpath.rfind('_B')+2])
 
     # Create Mapper
-    mpr = mapper(cgra_cfg_fpath, pe_cfg_fpath, 'CGRA', log_level=logging.DEBUG)
+    mpr = mapper(dot_fpath, cgra_cfg_fpath, pe_cfg_fpath, 'CGRA', log_level=log_level, log_dir=log_dir, log_fname=log_name, combine_logs=log_combine)
     # Run mapper
-    mpr.run(dot_ctxt, dot_blocks)
+    mpr.run()
     # Verify mapping
-    mpr.validate(dot_ctxt)
+    mpr.validate()
 
 if __name__ == "__main__":
     _test()

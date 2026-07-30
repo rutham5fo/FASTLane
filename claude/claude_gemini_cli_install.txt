@@ -1,0 +1,9 @@
+
+* To see if a package is installed: 'dpkg -s <packagename>' or 'dpkg-query -l <packagename>'
+* To find which package owns a command: 'dpkg -S `which <command>`'
+
+(1) Get nvm - https://github.com/nvm-sh/nvm
+(2) Get npm - 'nvm install --lts --latest-npm'
+(3) Follow - https://prince-arora-aws.medium.com/how-i-set-up-claude-code-for-free-no-subscription-no-credit-card-and-what-i-learned-along-the-2cba880682a2
+           - https://prince-arora-aws.medium.com/my-claude-code-gemini-setup-broke-heres-what-was-actually-happening-de00e84a29cf
+(4) After initial run of claude, /exit and - 'unset ANTHROPIC_AUTH_TOKEN'

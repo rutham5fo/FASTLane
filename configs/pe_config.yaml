@@ -10,31 +10,6 @@ Attributes:
   - {name: 'direct_out', translate: 'output'}
   - {name: 'reflexive', translate: 'acc'}
 
-#OPdef:                                                  # Do not change the name of this key, cgra_context.py searches for it.
-#  # Common
-#  - {name: 'bridge', type: 'route'}                     # Used to bridge non-bipartite nodes
-#  - {name: 'split', type: 'route'}                     # Used to increase node fanout
-#  - {name: 'merge', type: 'route'}                     # Used to increase node fanin
-#  # PE specific
-#  - {name: 'input', type: 'IO'}
-#  - {name: 'output', type: 'IO'}
-#  - {name: 'add', type: 'alu'}
-#  - {name: 'sub', type: 'alu'}
-#  - {name: 'mul', type: 'alu'}
-#  - {name: 'div', type: 'alu'}
-#  - {name: 'fadd', type: 'alu'}
-#  - {name: 'fsub', type: 'alu'}
-#  - {name: 'fmul', type: 'alu'}
-#  - {name: 'fdiv', type: 'alu'}
-#  - {name: 'sqrt', type: 'alu'}
-#  - {name: 'icmp', type: 'alu'}
-#  - {name: 'br', type: 'alu'}
-#  - {name: 'phi', type: 'alu'}
-#  - {name: 'load', type: 'mem'}                     # Addr in, Data out
-#  - {name: 'store', type: 'mem'}                     # Addr in, Data in
-#  - {name: 'const', type: 'reg'}
-#  - {name: 'acc', type: 'reg'}
-
 Routing:
   - 'bridge'
   - 'split'
@@ -43,7 +18,7 @@ Routing:
 #--------------------- PE Description -----------------
 # Customize by adding opGroups and Ops
 
-PE_int:
+PE_int:                                     # PE type / name
   opGroup:
     alu:                                    # Opcodes supported by ALU
       - 'add'
@@ -53,6 +28,13 @@ PE_int:
       - 'load'
       - 'store'
       - 'icmp'
+      - 'not'
+      - 'and'
+      - 'or'
+      - 'xor'
+      - 'shl'
+      - 'lshr'
+      - 'ashr'
     reg:
       - 'const'
       - 'acc'
@@ -70,9 +52,90 @@ PE_float:
       - 'sqrt'
       - 'load'
       - 'store'
+      - 'not'
+      - 'and'
+      - 'or'
+      - 'xor'
+      - 'shl'
+      - 'lshr'
+      - 'ashr'
     imm:
       - 'const'
     reg:
+      - 'acc'
+    IO:
+      - 'input'
+      - 'output'
+
+# ---------------- For Heterogenuous tests --------------
+
+PE_int_alu:
+  opGroup:
+    alu:
+      - 'add'
+      - 'sub'
+      - 'icmp'
+      - 'not'
+      - 'and'
+      - 'or'
+      - 'xor'
+      - 'shl'
+      - 'lshr'
+      - 'ashr'
+      - 'load'
+      - 'store'
+    reg:
+      - 'const'
+      - 'acc'
+    IO:
+      - 'input'
+      - 'output'
+
+PE_int_muldiv:
+  opGroup:
+    alu:
+      - 'mul'
+      - 'div'
+      - 'load'
+      - 'store'
+    reg:
+      - 'const'
+      - 'acc'
+    IO:
+      - 'input'
+      - 'output'
+
+PE_float_alu:
+  opGroup:
+    alu:
+      - 'fadd'
+      - 'fsub'
+      - 'not'
+      - 'and'
+      - 'or'
+      - 'xor'
+      - 'shl'
+      - 'lshr'
+      - 'ashr'
+      - 'load'
+      - 'store'
+    reg:
+      - 'const'
+      - 'acc'
+    IO:
+      - 'input'
+      - 'output'
+
+PE_float_muldiv:
+  opGroup:
+    alu:
+      - 'fmul'
+      - 'fdiv'
+      - 'sqrt'
+      - 'load'
+      - 'store'
+    reg:
+      - 'const'
       - 'acc'
     IO:
       - 'input'

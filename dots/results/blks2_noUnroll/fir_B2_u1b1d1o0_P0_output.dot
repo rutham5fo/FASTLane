@@ -1,0 +1,26 @@
+digraph G {
+const1 [opcode=const, constVal="1", rank=0, opID=0];
+i10_add [opcode=add, reflexive=true, rank=1, opID=1];
+i2_add2 [opcode=add, direct_in=true, rank=3, opID=2];
+i2_mul2 [opcode=mul, constVal="4", immediate=true, rank=2, opID=3];
+i3_load [opcode=load, memName="", rank=4, opID=4];
+i4_add2 [opcode=add, direct_in=true, rank=3, opID=5];
+i4_mul2 [opcode=mul, constVal="4", immediate=true, rank=2, opID=6];
+i5_load [opcode=load, memName="", rank=4, opID=7];
+i6_mul [opcode=mul, rank=5, opID=8];
+i7_load [opcode=load, memName="", direct_in=true, rank=5, opID=9];
+i8_add [opcode=add, rank=6, opID=10];
+i9_store [opcode=store, memName="", direct_in=true, rank=7, opID=11];
+const1 -> i10_add [operand=any2input, data=true];
+i10_add -> i2_mul2 [operand=any2input, data=true];
+i10_add -> i4_mul2 [operand=any2input, data=true];
+i2_add2 -> i3_load [operand=addr, data=true];
+i2_mul2 -> i2_add2 [operand=any2input, data=true];
+i3_load -> i6_mul [operand=any2input, data=true];
+i4_add2 -> i5_load [operand=addr, data=true];
+i4_mul2 -> i4_add2 [operand=any2input, data=true];
+i5_load -> i6_mul [operand=any2input, data=true];
+i6_mul -> i8_add [operand=any2input, data=true];
+i7_load -> i8_add [operand=any2input, data=true];
+i8_add -> i9_store [operand=data, data=true];
+}

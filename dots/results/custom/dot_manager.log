@@ -1,0 +1,78 @@
+2026-07-29 21:14:33.383 - [DEBUG] ||| get_graph ||| Read dot_file "/mnt/c/Users/91988/Documents/Amruth/Files/Projects/FASTLane/dots/srcs/benchmarks/accum.dot": 
+ dot_nodes = ['const0', 'const2', 'const3', 'const4', 'const5', 'i10_add1', 'i10_data_size1', 'i10_mul1', 'i11_load', 'i12_mul', 'i13_store', 'i14_add', 'i14_output', 'i3_add', 'i4_add1', 'i4_data_size1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_data_size1', 'i7_mul1', 'i8_load', 'i9_add'] 
+ dot_edges = ['const0', 'const2', 'const3', 'const4', 'const5', 'i10_add1', 'i10_add1', 'i10_data_size1', 'i10_mul1', 'i11_load', 'i12_mul', 'i12_mul', 'i14_add', 'i14_add', 'i3_add', 'i3_add', 'i3_add', 'i3_add', 'i4_add1', 'i4_data_size1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_data_size1', 'i7_mul1', 'i8_load', 'i9_add']
+2026-07-29 21:14:33.384 - [DEBUG] ||| update ||| Updated graph (absorb_reflexive): 
+ New dot_nodes = ['const0', 'const2', 'const3', 'const4', 'const5', 'i10_add1', 'i10_data_size1', 'i10_mul1', 'i11_load', 'i12_mul', 'i13_store', 'i14_add', 'i14_output', 'i3_add', 'i4_add1', 'i4_data_size1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_data_size1', 'i7_mul1', 'i8_load', 'i9_add'] 
+ New dot_edges = ['const0', 'const2', 'const3', 'const4', 'const5', 'i10_add1', 'i10_add1', 'i10_data_size1', 'i10_mul1', 'i11_load', 'i12_mul', 'i12_mul', 'i14_add', 'i3_add', 'i3_add', 'i3_add', 'i4_add1', 'i4_data_size1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_data_size1', 'i7_mul1', 'i8_load', 'i9_add']
+2026-07-29 21:14:33.385 - [DEBUG] ||| update ||| Updated graph (absorb_constants): 
+ New dot_nodes = ['const0', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i13_store', 'i14_add', 'i14_output', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add'] 
+ New dot_edges = ['const0', 'i10_add1', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i12_mul', 'i14_add', 'i3_add', 'i3_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add']
+2026-07-29 21:14:33.385 - [DEBUG] ||| update ||| Updated graph (absorb_IO): 
+ New dot_nodes = ['const0', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i13_store', 'i14_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add'] 
+ New dot_edges = ['const0', 'i10_add1', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i12_mul', 'i3_add', 'i3_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add']
+2026-07-29 21:14:33.386 - [DEBUG] ||| update ||| Updated graph (annotate_data_edges): 
+ New dot_nodes = ['const0', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i13_store', 'i14_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add'] 
+ New dot_edges = ['const0', 'i10_add1', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i12_mul', 'i3_add', 'i3_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add']
+2026-07-29 21:14:33.386 - [DEBUG] ||| update ||| Updated graph (annotate_predicate_edges): 
+ New dot_nodes = ['const0', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i13_store', 'i14_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add'] 
+ New dot_edges = ['const0', 'i10_add1', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i12_mul', 'i3_add', 'i3_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add']
+2026-07-29 21:14:33.387 - [DEBUG] ||| legalize_fanout ||| Iter[0]
+2026-07-29 21:14:33.387 - [DEBUG] ||| legalize_fanout ||| Iter[2]
+2026-07-29 21:14:33.387 - [DEBUG] ||| update ||| Updated graph (legalize_incidence): 
+ New dot_nodes = ['const0', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i13_store', 'i14_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add', 'i3_add_fout_0'] 
+ New dot_edges = ['const0', 'i10_add1', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i12_mul', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add', 'i3_add_fout_0', 'i3_add_fout_0', 'i3_add']
+2026-07-29 21:14:33.580 - [DEBUG] ||| get_graph ||| Read dot_file "/mnt/c/Users/91988/Documents/Amruth/Files/Projects/FASTLane/.tmp/tmp_rank_dest.dot": 
+ dot_nodes = ['graph', 'node', 'const0', 'i3_add', 'i10_add1', 'i11_load', 'i13_store', 'i10_mul1', 'i12_mul', 'i14_add', 'i3_add_fout_0', 'i4_add1', 'i5_load', 'i4_mul1', 'i9_add', 'i6_add', 'i7_mul1', 'i7_add1', 'i8_load'] 
+ dot_edges = ['const0', 'i10_add1', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i12_mul', 'i3_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add', 'i3_add_fout_0', 'i3_add_fout_0']
+2026-07-29 21:14:33.585 - [DEBUG] ||| update ||| Updated graph (assign_rank): 
+ New dot_nodes = ['const0', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i13_store', 'i14_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add', 'i3_add_fout_0'] 
+ New dot_edges = ['const0', 'i10_add1', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i12_mul', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add', 'i3_add_fout_0', 'i3_add_fout_0', 'i3_add']
+2026-07-29 21:14:33.585 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c590>]
+2026-07-29 21:14:33.586 - [DEBUG] ||| make_bipartite ||| src (const0) rank = 0, rel_src_rank = 0; dest (i3_add) rank = 1, rel_dest_rank = 1
+2026-07-29 21:14:33.586 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c5c0>, <pydot.core.Node object at 0x7f1758f3c5f0>]
+2026-07-29 21:14:33.586 - [DEBUG] ||| make_bipartite ||| src (i10_add1) rank = 6, rel_src_rank = 2; dest (i11_load) rank = 7, rel_dest_rank = 1
+2026-07-29 21:14:33.586 - [DEBUG] ||| make_bipartite ||| src (i10_add1) rank = 6, rel_src_rank = 2; dest (i13_store) rank = 9, rel_dest_rank = 1
+2026-07-29 21:14:33.587 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c560>]
+2026-07-29 21:14:33.587 - [DEBUG] ||| make_bipartite ||| src (i10_mul1) rank = 2, rel_src_rank = 2; dest (i10_add1) rank = 6, rel_dest_rank = 2
+2026-07-29 21:14:33.587 - [DEBUG] ||| make_bipartite ||| og_edge = i10_mul1 -> i10_add1 [operand=any2input, data=true];
+2026-07-29 21:14:33.588 - [DEBUG] ||| make_bipartite ||| og_opID = 2, og_edge_attributes = [('operand', 'any2input'), ('data', 'true')]
+2026-07-29 21:14:33.588 - [DEBUG] ||| make_bipartite ||| forced_set_diff = 2, max_bridges = 1
+2026-07-29 21:14:33.588 - [DEBUG] ||| make_bipartite ||| Created new bridge | name = extd_i10_mul1_0_0, attributes = [('opcode', 'bridge'), ('opID', 2), ('rank', '7')]
+2026-07-29 21:14:33.588 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c680>]
+2026-07-29 21:14:33.588 - [DEBUG] ||| make_bipartite ||| src (i11_load) rank = 7, rel_src_rank = 1; dest (i12_mul) rank = 8, rel_dest_rank = 0
+2026-07-29 21:14:33.589 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c650>, <pydot.core.Node object at 0x7f1758f3c440>]
+2026-07-29 21:14:33.589 - [DEBUG] ||| make_bipartite ||| src (i12_mul) rank = 8, rel_src_rank = 0; dest (i13_store) rank = 9, rel_dest_rank = 1
+2026-07-29 21:14:33.589 - [DEBUG] ||| make_bipartite ||| src (i12_mul) rank = 8, rel_src_rank = 0; dest (i14_add) rank = 9, rel_dest_rank = 1
+2026-07-29 21:14:33.589 - [DEBUG] ||| make_bipartite ||| Children = []
+2026-07-29 21:14:33.589 - [DEBUG] ||| make_bipartite ||| Children = []
+2026-07-29 21:14:33.590 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c680>, <pydot.core.Node object at 0x7f1758f3c560>]
+2026-07-29 21:14:33.590 - [DEBUG] ||| make_bipartite ||| src (i3_add) rank = 1, rel_src_rank = 1; dest (i10_mul1) rank = 2, rel_dest_rank = 2
+2026-07-29 21:14:33.590 - [DEBUG] ||| make_bipartite ||| src (i3_add) rank = 1, rel_src_rank = 1; dest (i3_add_fout_0) rank = 2, rel_dest_rank = 2
+2026-07-29 21:14:33.590 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c5c0>]
+2026-07-29 21:14:33.590 - [DEBUG] ||| make_bipartite ||| src (i4_add1) rank = 4, rel_src_rank = 4; dest (i5_load) rank = 5, rel_dest_rank = 3
+2026-07-29 21:14:33.591 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c650>]
+2026-07-29 21:14:33.591 - [DEBUG] ||| make_bipartite ||| src (i4_mul1) rank = 3, rel_src_rank = 3; dest (i4_add1) rank = 4, rel_dest_rank = 4
+2026-07-29 21:14:33.591 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c560>]
+2026-07-29 21:14:33.591 - [DEBUG] ||| make_bipartite ||| src (i5_load) rank = 5, rel_src_rank = 3; dest (i9_add) rank = 7, rel_dest_rank = 1
+2026-07-29 21:14:33.591 - [DEBUG] ||| make_bipartite ||| og_edge = i5_load -> i9_add [operand=any2input, data=true];
+2026-07-29 21:14:33.592 - [DEBUG] ||| make_bipartite ||| og_opID = 10, og_edge_attributes = [('operand', 'any2input'), ('data', 'true')]
+2026-07-29 21:14:33.592 - [DEBUG] ||| make_bipartite ||| forced_set_diff = 2, max_bridges = 1
+2026-07-29 21:14:33.592 - [DEBUG] ||| make_bipartite ||| Created new bridge | name = extd_i5_load_0_0, attributes = [('opcode', 'bridge'), ('opID', 10), ('rank', '6')]
+2026-07-29 21:14:33.592 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c620>]
+2026-07-29 21:14:33.592 - [DEBUG] ||| make_bipartite ||| src (i6_add) rank = 3, rel_src_rank = 3; dest (i7_mul1) rank = 4, rel_dest_rank = 4
+2026-07-29 21:14:33.593 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c590>]
+2026-07-29 21:14:33.593 - [DEBUG] ||| make_bipartite ||| src (i7_add1) rank = 5, rel_src_rank = 3; dest (i8_load) rank = 6, rel_dest_rank = 2
+2026-07-29 21:14:33.593 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c560>]
+2026-07-29 21:14:33.593 - [DEBUG] ||| make_bipartite ||| src (i7_mul1) rank = 4, rel_src_rank = 4; dest (i7_add1) rank = 5, rel_dest_rank = 3
+2026-07-29 21:14:33.593 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c620>]
+2026-07-29 21:14:33.593 - [DEBUG] ||| make_bipartite ||| src (i8_load) rank = 6, rel_src_rank = 2; dest (i9_add) rank = 7, rel_dest_rank = 1
+2026-07-29 21:14:33.594 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c590>]
+2026-07-29 21:14:33.594 - [DEBUG] ||| make_bipartite ||| src (i9_add) rank = 7, rel_src_rank = 1; dest (i12_mul) rank = 8, rel_dest_rank = 0
+2026-07-29 21:14:33.594 - [DEBUG] ||| make_bipartite ||| Children = [<pydot.core.Node object at 0x7f1758f3c560>, <pydot.core.Node object at 0x7f1758f3c470>]
+2026-07-29 21:14:33.594 - [DEBUG] ||| make_bipartite ||| src (i3_add_fout_0) rank = 2, rel_src_rank = 2; dest (i4_mul1) rank = 3, rel_dest_rank = 3
+2026-07-29 21:14:33.594 - [DEBUG] ||| make_bipartite ||| src (i3_add_fout_0) rank = 2, rel_src_rank = 2; dest (i6_add) rank = 3, rel_dest_rank = 3
+2026-07-29 21:14:33.595 - [DEBUG] ||| update ||| Updated graph (make_bipartite): 
+ New dot_nodes = ['const0', 'i10_add1', 'i10_mul1', 'i11_load', 'i12_mul', 'i13_store', 'i14_add', 'i3_add', 'i4_add1', 'i4_mul1', 'i5_load', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add', 'i3_add_fout_0', 'extd_i10_mul1_0_0', 'extd_i5_load_0_0'] 
+ New dot_edges = ['const0', 'i10_add1', 'i10_add1', 'i11_load', 'i12_mul', 'i12_mul', 'i3_add', 'i4_add1', 'i4_mul1', 'i6_add', 'i7_add1', 'i7_mul1', 'i8_load', 'i9_add', 'i3_add_fout_0', 'i3_add_fout_0', 'i3_add', 'i10_mul1', 'extd_i10_mul1_0_0', 'i5_load', 'extd_i5_load_0_0']
+2026-07-29 21:14:33.595 - [INFO] ||| generate ||| accum.dot || Blocks = 5 | Total nodes = 19, max_rank = 9, max_order = 3 | (u, b, d) = (1, 1, 1)
+2026-07-29 21:14:35.242 - [INFO] ||| generate ||| Dot file write succeeded !
